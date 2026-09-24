@@ -145,6 +145,10 @@ html, body { height:100%; overflow:hidden; }
 .card.face-down:last-child { margin-bottom:0; }
 .card.face-up { margin-bottom:calc(26px - var(--fit-card-height, 0px)); }
 .card.face-up:last-child { margin-bottom:0; }
+.card.face-up:not(:last-child) { margin-bottom:calc(26px - var(--fit-card-height, 0px)) !important; }
+@media (max-width: 620px) {
+  .card.face-up:not(:last-child) { margin-bottom:calc(26px - var(--fit-card-height, 0px)) !important; }
+}
 @media (max-width: 620px) {
   .shell { height:calc(100dvh - 66px); padding:10px 8px 12px; }
   .hud { gap:8px; margin-bottom:8px; }
