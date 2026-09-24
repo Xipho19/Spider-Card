@@ -102,7 +102,7 @@ button { color: inherit; }
   .stats { width:100%; }
   .stat { flex:1; min-width:0; }
   .board-wrap { padding:10px; border-radius:16px; }
-  .board { min-width:760px; gap:7px; }
+  .board { min-width:0; gap:4px; grid-template-columns:repeat(10, minmax(0, 1fr)); }
   .column { min-height:430px; }
   .card { min-height:84px; margin-bottom:-60px; }
   .stock { width:64px; height:86px; }
@@ -133,7 +133,8 @@ html, body { height:100%; overflow:hidden; }
 .shell { height:calc(100dvh - 76px); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 .hud { flex:0 0 auto; }
 .board-wrap { flex:1 1 auto; min-height:0; overflow:hidden; }
-.board { height:100%; min-width:0; min-height:0; padding-bottom:0; }
+.board { height:100%; min-width:0; min-height:0; padding-bottom:0; grid-template-columns:repeat(10, minmax(0, 1fr)); }
+.column { min-width:0; }
 .column { min-height:0; }
 .card { height:var(--fit-card-height, auto); min-height:0; aspect-ratio:auto; margin-bottom:calc(var(--fit-card-overlap, 0px) * -1); }
 .card:last-child { margin-bottom:0; }
@@ -431,6 +432,7 @@ html, body { height:100%; overflow:hidden; }
 </script>
 </body>
 </html>
+
 
 
 
