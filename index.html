@@ -54,8 +54,9 @@ button { color: inherit; }
 .card.face-up { background:linear-gradient(145deg, #fffdf7, #e8ece8); color:#273630; border:1px solid rgba(19,48,43,.25); box-shadow: 0 4px 10px rgba(0,0,0,.22); touch-action:none; cursor:grab; }
 .card.face-up:active { cursor:grabbing; }
 .card.dragging-source { opacity:.28; filter:saturate(.7); }
-.drag-ghost { position:fixed; left:0; top:0; pointer-events:none; z-index:60; filter:drop-shadow(0 14px 18px rgba(0,0,0,.3)); transform:translate3d(0,0,0); }
-.drag-ghost .card { position:absolute; left:0; width:100%; margin:0; cursor:grabbing; pointer-events:none; }
+.drag-ghost { position:fixed; left:0; top:0; pointer-events:none; z-index:60; opacity:1; filter:drop-shadow(0 14px 18px rgba(0,0,0,.3)); transform:translate3d(0,0,0); }
+.drag-ghost .card { position:absolute; left:0; width:100%; margin:0; cursor:grabbing; pointer-events:none; opacity:1 !important; filter:none; }
+.drag-ghost .card-art { opacity:1; }
 .drag-ghost .card:last-child { margin-bottom:0; }
 .drag-count { position:absolute; right:-10px; top:-10px; min-width:24px; height:24px; padding:0 6px; display:grid; place-items:center; border-radius:99px; background:var(--accent); color:#172a25; font-size:12px; font-weight:800; box-shadow:0 4px 10px rgba(0,0,0,.28); }
 .card.face-up:hover { transform:translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,.28); z-index:3; }
@@ -370,7 +371,7 @@ html, body { height:100%; overflow:hidden; }
     const naturalHeight = cardWidth * (96 / 71);
     const availableHeight = Math.max(120, wrap.clientHeight - 16);
     const cardHeight = Math.min(naturalHeight, Math.max(48, availableHeight / Math.max(1, 1 + (maxDepth - 1) * .58)));
-    const offset = maxDepth > 1 ? Math.min(cardHeight * .9, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
+    const offset = maxDepth > 1 ? Math.min(cardHeight * .68, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
     boardEl.style.setProperty('--fit-card-height', `${cardHeight}px`);
     boardEl.style.setProperty('--fit-card-overlap', `${Math.max(0, cardHeight - Math.max(18, offset))}px`);
     boardEl.style.setProperty('--fit-back-height', `${Math.max(14, Math.min(24, cardHeight * .16))}px`);
@@ -399,9 +400,9 @@ html, body { height:100%; overflow:hidden; }
     const source = document.querySelector(`.card[data-col="${d.col}"][data-index="${d.index}"]`); if (!source) return;
     const rect = source.getBoundingClientRect();
     const count = state.columns[d.col].length - d.index;
-    const ghost = document.createElement('div'); ghost.className = 'drag-ghost'; ghost.style.width = `${rect.width}px`; ghost.style.height = `${rect.height + Math.min(count - 1, 5) * 28}px`;
+    const ghost = document.createElement('div'); ghost.className = 'drag-ghost'; ghost.style.width = `${rect.width}px`; ghost.style.height = `${rect.height + Math.min(count - 1, 5) * 24}px`; ghost.style.pointerEvents = 'none';
     const visibleCards = Array.from(document.querySelectorAll(`.card[data-col="${d.col}"]`)).slice(d.index, d.index + 6);
-    visibleCards.forEach((item, i) => { const cloneCard = item.cloneNode(true); cloneCard.classList.remove('selected', 'hint'); cloneCard.style.top = `${i * 28}px`; ghost.appendChild(cloneCard); item.classList.add('dragging-source'); });
+    visibleCards.forEach((item, i) => { const cloneCard = item.cloneNode(true); cloneCard.classList.remove('selected', 'hint'); cloneCard.style.top = `${i * 24}px`; cloneCard.style.opacity = '1'; cloneCard.style.filter = 'none'; ghost.appendChild(cloneCard); item.classList.add('dragging-source'); });
     if (count > 6) { const badge = document.createElement('span'); badge.className = 'drag-count'; badge.textContent = `+${count - 6}`; ghost.appendChild(badge); }
     document.body.appendChild(ghost); d.ghost = ghost; d.offsetX = rect.width / 2; d.offsetY = 26; positionPointerDrag(d.startX, d.startY);
   }
