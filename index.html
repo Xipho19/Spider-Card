@@ -139,6 +139,9 @@ html, body { height:100%; overflow:hidden; }
 .card { height:var(--fit-card-height, auto); min-height:0; aspect-ratio:auto; margin-bottom:calc(var(--fit-card-overlap, 0px) * -1); }
 .card:last-child { margin-bottom:0; }
 .bottom-row, .footer-note { flex:0 0 auto; }
+.deal-row { margin-top:0; margin-bottom:10px; }
+.card.face-down { height:var(--fit-back-height, 18px); min-height:0; aspect-ratio:auto; margin-bottom:-12px; }
+.card.face-down:last-child { margin-bottom:0; }
 @media (max-width: 620px) {
   .shell { height:calc(100dvh - 66px); padding:10px 8px 12px; }
   .hud { gap:8px; margin-bottom:8px; }
@@ -161,11 +164,11 @@ html, body { height:100%; overflow:hidden; }
       <div class="mode-tabs" aria-label="难度选择"><button class="mode-tab active" data-mode="1">单花色</button><button class="mode-tab" data-mode="2">双花色</button><button class="mode-tab" data-mode="4">四色挑战</button></div>
       <div class="stats"><div class="stat"><small>时间</small><strong id="time">00:00</strong></div><div class="stat"><small>步数</small><strong id="moves">0</strong></div><div class="stat"><small>已完成</small><strong id="completed">0 / 8</strong></div><div class="stat"><small>牌局</small><strong id="seedLabel">—</strong></div></div>
     </section>
-    <section class="board-wrap"><div id="board" class="board" aria-label="蜘蛛纸牌牌桌"></div></section>
-    <section class="bottom-row">
+    <section class="bottom-row deal-row">
       <div class="stock-area"><button id="stock" class="stock" aria-label="发牌"><span id="stockCount">5</span></button><div><div class="stock-label">剩余发牌轮数</div><div id="statusText" class="stock-label">选择一组同花色连续牌开始移动</div></div></div>
       <div class="tips">点击一张牌选择整组，点击目标列移动；也可以直接拖拽。</div>
     </section>
+    <section class="board-wrap"><div id="board" class="board" aria-label="蜘蛛纸牌牌桌"></div></section>
     <div class="footer-note"><span class="footer-dot"></span><span>本地离线运行 · 每局随机种子可复盘 · 原创桌面与牌背</span></div>
   </main>
 </div>
@@ -370,6 +373,7 @@ html, body { height:100%; overflow:hidden; }
     const offset = maxDepth > 1 ? Math.min(cardHeight * .9, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
     boardEl.style.setProperty('--fit-card-height', `${cardHeight}px`);
     boardEl.style.setProperty('--fit-card-overlap', `${Math.max(0, cardHeight - Math.max(18, offset))}px`);
+    boardEl.style.setProperty('--fit-back-height', `${Math.max(14, Math.min(24, cardHeight * .16))}px`);
   }
   function scheduleBoardFit() { if (typeof requestAnimationFrame !== 'function') return fitBoardToViewport(); requestAnimationFrame(() => requestAnimationFrame(fitBoardToViewport)); }
   function render() {
