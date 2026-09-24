@@ -143,6 +143,8 @@ html, body { height:100%; overflow:hidden; }
 .deal-row { margin-top:0; margin-bottom:10px; }
 .card.face-down { height:var(--fit-back-height, 18px); min-height:0; aspect-ratio:auto; margin-bottom:-12px; }
 .card.face-down:last-child { margin-bottom:0; }
+.card.face-up { margin-bottom:calc(38px - var(--fit-card-height, 0px)); }
+.card.face-up:last-child { margin-bottom:0; }
 @media (max-width: 620px) {
   .shell { height:calc(100dvh - 66px); padding:10px 8px 12px; }
   .hud { gap:8px; margin-bottom:8px; }
