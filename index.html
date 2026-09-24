@@ -376,7 +376,10 @@ html, body { height:100%; overflow:hidden; }
     const cardWidth = Math.max(34, (boardEl.clientWidth - gap * 9 - horizontalPadding) / 10);
     const naturalHeight = cardWidth * (96 / 71);
     const availableHeight = Math.max(120, wrap.clientHeight - 16);
-    const cardHeight = Math.min(naturalHeight, Math.max(48, availableHeight / Math.max(1, 1 + (maxDepth - 1) * .58)));
+    // Keep card dimensions stable while the game progresses. The previous
+    // implementation used maxDepth to resize every card after each move,
+    // which made the whole tableau visibly grow and shrink.
+    const cardHeight = Math.max(48, Math.min(naturalHeight, 160));
     const offset = maxDepth > 1 ? Math.min(cardHeight * .52, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
     boardEl.style.setProperty('--fit-card-height', `${cardHeight}px`);
     boardEl.style.setProperty('--fit-card-overlap', `${Math.max(0, cardHeight - Math.max(18, offset))}px`);
