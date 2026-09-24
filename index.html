@@ -125,7 +125,29 @@ button { color: inherit; }
 .card.red { color:#b40000; }
 .card.black { color:#111; }
 .stock { border-radius:3px; background-color:#12548a; background-image:linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.18) 75%), linear-gradient(45deg, rgba(255,255,255,.12) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.12) 75%); background-position:0 0, 5px 5px; background-size:10px 10px; border:1px solid #e7e7e7; box-shadow:1px 2px 0 rgba(0,0,0,.5), inset 0 0 0 2px #0c3a62; }
-.stock::before { inset:5px; border:1px solid rgba(255,255,255,.7); border-radius:1px; background:transparent; }</style>
+.stock::before { inset:5px; border:1px solid rgba(255,255,255,.7); border-radius:1px; background:transparent; }
+/* Fit the full tableau inside the viewport. */
+html, body { height:100%; overflow:hidden; }
+.app { height:100dvh; min-height:0; }
+.topbar { position:relative; flex:0 0 auto; }
+.shell { height:calc(100dvh - 76px); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+.hud { flex:0 0 auto; }
+.board-wrap { flex:1 1 auto; min-height:0; overflow:hidden; }
+.board { height:100%; min-width:0; min-height:0; padding-bottom:0; }
+.column { min-height:0; }
+.card { height:var(--fit-card-height, auto); min-height:0; aspect-ratio:auto; margin-bottom:calc(var(--fit-card-overlap, 0px) * -1); }
+.card:last-child { margin-bottom:0; }
+.bottom-row, .footer-note { flex:0 0 auto; }
+@media (max-width: 620px) {
+  .shell { height:calc(100dvh - 66px); padding:10px 8px 12px; }
+  .hud { gap:8px; margin-bottom:8px; }
+  .board-wrap { padding:7px; border-radius:14px; }
+  .board { gap:4px; }
+  .column { padding:4px 2px 6px; }
+  .bottom-row { margin-top:8px; }
+  .footer-note { margin-top:8px; }
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -334,6 +356,21 @@ button { color: inherit; }
   function showHint() { const h = findHint(); state.hint = h; render(); if (!h) toast('当前没有可推进的移动'); else if (h.stock) toast('暂时没有可推进的移动，发下一轮牌'); else toast(`试试把第 ${h.from+1} 列移动到第 ${h.to+1} 列`); }
   function undo() { const prev = state.history.pop(); if (!prev) { toast('还没有可撤回的操作'); return; } restoreSnapshot(prev); playMoveSound(); }
   function checkWin() { if (state.completed >= 8) { const finalTime = elapsed(); state.elapsedBefore = finalTime; state.startedAt = 0; $('#winText').textContent = `用时 ${fmtTime(finalTime)} · ${state.moves} 步 · 种子 ${state.seed}`; $('#overlay').classList.add('open'); persist(); playWinSound(); } }
+  function fitBoardToViewport() {
+    const wrap = $('.board-wrap'); const boardEl = $('#board');
+    if (!wrap || !boardEl || !state.columns.length || typeof getComputedStyle !== 'function') return;
+    const maxDepth = Math.max(1, ...state.columns.map(column => column.length));
+    const gap = parseFloat(getComputedStyle(boardEl).columnGap) || 6;
+    const horizontalPadding = 10;
+    const cardWidth = Math.max(34, (boardEl.clientWidth - gap * 9 - horizontalPadding) / 10);
+    const naturalHeight = cardWidth * (96 / 71);
+    const availableHeight = Math.max(120, wrap.clientHeight - 16);
+    const cardHeight = Math.min(naturalHeight, Math.max(48, availableHeight / Math.max(1, 1 + (maxDepth - 1) * .58)));
+    const offset = maxDepth > 1 ? Math.min(cardHeight * .9, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
+    boardEl.style.setProperty('--fit-card-height', `${cardHeight}px`);
+    boardEl.style.setProperty('--fit-card-overlap', `${Math.max(0, cardHeight - Math.max(18, offset))}px`);
+  }
+  function scheduleBoardFit() { if (typeof requestAnimationFrame !== 'function') return fitBoardToViewport(); requestAnimationFrame(() => requestAnimationFrame(fitBoardToViewport)); }
   function render() {
     board.innerHTML = '';
     state.columns.forEach((col, ci) => { const column = document.createElement('div'); column.className = 'column' + (!col.length ? ' empty':''); column.dataset.col = ci; if (state.selected && state.selected.col !== ci && canMove(state.selected.col, state.selected.index, ci)) column.classList.add('drop-target');
@@ -343,6 +380,7 @@ button { color: inherit; }
         if (card.faceUp) { el.setAttribute('aria-label', `${rankName(card.rank)}${card.suit}`); el.innerHTML = `<img class="card-art" src="${cardAsset(card)}" alt="${rankName(card.rank)}${card.suit}" draggable="false">`; el.addEventListener('click', e => { e.stopPropagation(); clickCard(ci,idx); }); el.addEventListener('pointerdown', e => beginPointerDrag(e, ci, idx, el)); } column.appendChild(el); }); board.appendChild(column); });
     $('#stockCount').textContent = Math.ceil(state.stock.length / 10); $('#stock').classList.toggle('empty', !state.stock.length); $('#stock').classList.toggle('hint-stock', Boolean(state.hint && state.hint.stock)); $('#moves').textContent = state.moves; $('#completed').textContent = `${state.completed} / 8`; $('#seedLabel').textContent = String(state.seed).slice(-6); $('#time').textContent = fmtTime(elapsed()); $('#undoBtn').disabled = !state.history.length; $('#undoBtn').style.opacity = state.history.length ? '1' : '.45'; updateSoundButton();
     document.querySelectorAll('.mode-tab').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.mode)===state.mode));
+    scheduleBoardFit();
   }
   function beginPointerDrag(e, col, index, el) {
     if (e.button !== 0 || !isMovableRun(col, index) || state.drag) return;
@@ -386,6 +424,7 @@ button { color: inherit; }
   let toastTimer; function toast(msg) { const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'), 1800); }
   document.querySelectorAll('.mode-tab').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.mode); if (mode!==state.mode) newGame(mode); }));
   $('#newBtn').addEventListener('click', () => newGame()); $('#playAgain').addEventListener('click', () => newGame()); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
+  if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   if (!restoreSavedGame()) newGame(1);
 })();
