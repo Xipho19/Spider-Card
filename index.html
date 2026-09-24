@@ -141,7 +141,7 @@ html, body { height:100%; overflow:hidden; }
 .card:last-child { margin-bottom:0; }
 .bottom-row, .footer-note { flex:0 0 auto; }
 .deal-row { margin-top:0; margin-bottom:10px; }
-.card.face-down { height:var(--fit-back-height, 18px); min-height:0; aspect-ratio:auto; margin-bottom:-12px; }
+.card.face-down { height:var(--fit-back-height, 18px); min-height:0; aspect-ratio:auto; margin-bottom:calc(8px - var(--fit-back-height, 18px)); }
 .card.face-down:last-child { margin-bottom:0; }
 .card.face-up { margin-bottom:calc(38px - var(--fit-card-height, 0px)); }
 .card.face-up:last-child { margin-bottom:0; }
