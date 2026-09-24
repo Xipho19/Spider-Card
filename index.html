@@ -192,6 +192,21 @@ html, body { height:100%; overflow:hidden; }
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
   const cardAsset = (card) => `assets/cards/${SUIT_ASSET[card.suit]}-${rankName(card.rank)}.png`;
   const clone = (v) => JSON.parse(JSON.stringify(v));
+  const preloadedCardAssets = new Set();
+  function preloadCardAssets() {
+    if (typeof Image === 'undefined') return;
+    SUITS.forEach(suit => {
+      for (let rank = 1; rank <= 13; rank++) {
+        const src = cardAsset({ suit, rank });
+        if (preloadedCardAssets.has(src)) continue;
+        const image = new Image();
+        image.decoding = 'sync';
+        image.loading = 'eager';
+        image.src = src;
+        preloadedCardAssets.add(src);
+      }
+    });
+  }
   const SAVE_KEY = 'woven-spider-solitaire-v1';
   let audioContext = null;
   function persist() {
@@ -392,7 +407,7 @@ html, body { height:100%; overflow:hidden; }
       column.addEventListener('click', e => { if (e.target === column && state.selected) { if (!move(state.selected.col, state.selected.index, ci)) { state.selected=null; render(); } } });
       column.addEventListener('dragover', e => { e.preventDefault(); column.classList.add('drop-target'); }); column.addEventListener('dragleave', () => column.classList.remove('drop-target')); column.addEventListener('drop', e => { e.preventDefault(); column.classList.remove('drop-target'); const d = e.dataTransfer.getData('text/plain').split(',').map(Number); if (!move(d[0],d[1],ci)) toast('这组牌不能放到此列'); });
       col.forEach((card, idx) => { const el = document.createElement('div'); el.className = 'card ' + (card.faceUp ? 'face-up ' + (RED.has(card.suit)?'red':'black') : 'face-down') + (state.dealFlash && card.faceUp ? ' deal-in' : ''); el.dataset.col=ci; el.dataset.index=idx; if (state.selected && state.selected.col===ci && idx>=state.selected.index) el.classList.add('selected'); if (state.hint && !state.hint.stock && ((state.hint.from===ci && idx===state.hint.index) || (state.hint.to===ci && idx===col.length-1))) el.classList.add('hint'); el.draggable = false;
-        if (card.faceUp) { el.setAttribute('aria-label', `${rankName(card.rank)}${card.suit}`); el.innerHTML = `<img class="card-art" src="${cardAsset(card)}" alt="${rankName(card.rank)}${card.suit}" draggable="false">`; el.addEventListener('click', e => { e.stopPropagation(); clickCard(ci,idx); }); el.addEventListener('pointerdown', e => beginPointerDrag(e, ci, idx, el)); } column.appendChild(el); }); board.appendChild(column); });
+        if (card.faceUp) { el.setAttribute('aria-label', `${rankName(card.rank)}${card.suit}`); el.innerHTML = `<img class="card-art" src="${cardAsset(card)}" alt="${rankName(card.rank)}${card.suit}" draggable="false" loading="eager" decoding="sync" fetchpriority="high">`; el.addEventListener('click', e => { e.stopPropagation(); clickCard(ci,idx); }); el.addEventListener('pointerdown', e => beginPointerDrag(e, ci, idx, el)); } column.appendChild(el); }); board.appendChild(column); });
     $('#stockCount').textContent = Math.ceil(state.stock.length / 10); $('#stock').classList.toggle('empty', !state.stock.length); $('#stock').classList.toggle('hint-stock', Boolean(state.hint && state.hint.stock)); $('#moves').textContent = state.moves; $('#completed').textContent = `${state.completed} / 8`; $('#seedLabel').textContent = String(state.seed).slice(-6); $('#time').textContent = fmtTime(elapsed()); $('#undoBtn').disabled = !state.history.length; $('#undoBtn').style.opacity = state.history.length ? '1' : '.45'; updateSoundButton();
     document.querySelectorAll('.mode-tab').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.mode)===state.mode));
     scheduleBoardFit();
@@ -441,6 +456,7 @@ html, body { height:100%; overflow:hidden; }
   $('#newBtn').addEventListener('click', () => newGame()); $('#playAgain').addEventListener('click', () => newGame()); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
+  preloadCardAssets();
   if (!restoreSavedGame()) newGame(1);
 })();
 </script>
