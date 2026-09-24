@@ -371,7 +371,7 @@ html, body { height:100%; overflow:hidden; }
     const naturalHeight = cardWidth * (96 / 71);
     const availableHeight = Math.max(120, wrap.clientHeight - 16);
     const cardHeight = Math.min(naturalHeight, Math.max(48, availableHeight / Math.max(1, 1 + (maxDepth - 1) * .58)));
-    const offset = maxDepth > 1 ? Math.min(cardHeight * .68, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
+    const offset = maxDepth > 1 ? Math.min(cardHeight * .52, (availableHeight - cardHeight) / (maxDepth - 1)) : cardHeight;
     boardEl.style.setProperty('--fit-card-height', `${cardHeight}px`);
     boardEl.style.setProperty('--fit-card-overlap', `${Math.max(0, cardHeight - Math.max(18, offset))}px`);
     boardEl.style.setProperty('--fit-back-height', `${Math.max(14, Math.min(24, cardHeight * .16))}px`);
@@ -402,7 +402,7 @@ html, body { height:100%; overflow:hidden; }
     const count = state.columns[d.col].length - d.index;
     const ghost = document.createElement('div'); ghost.className = 'drag-ghost'; ghost.style.width = `${rect.width}px`; ghost.style.height = `${rect.height + Math.min(count - 1, 5) * 24}px`; ghost.style.pointerEvents = 'none';
     const visibleCards = Array.from(document.querySelectorAll(`.card[data-col="${d.col}"]`)).slice(d.index, d.index + 6);
-    visibleCards.forEach((item, i) => { const cloneCard = item.cloneNode(true); cloneCard.classList.remove('selected', 'hint'); cloneCard.style.top = `${i * 24}px`; cloneCard.style.opacity = '1'; cloneCard.style.filter = 'none'; ghost.appendChild(cloneCard); item.classList.add('dragging-source'); });
+    visibleCards.forEach((item, i) => { const cloneCard = item.cloneNode(true); cloneCard.classList.remove('selected', 'hint'); cloneCard.style.top = `${i * 24}px`; cloneCard.style.height = `${rect.height}px`; cloneCard.style.minHeight = `${rect.height}px`; cloneCard.style.aspectRatio = 'auto'; cloneCard.style.opacity = '1'; cloneCard.style.filter = 'none'; ghost.appendChild(cloneCard); item.classList.add('dragging-source'); });
     if (count > 6) { const badge = document.createElement('span'); badge.className = 'drag-count'; badge.textContent = `+${count - 6}`; ghost.appendChild(badge); }
     document.body.appendChild(ghost); d.ghost = ghost; d.offsetX = rect.width / 2; d.offsetY = 26; positionPointerDrag(d.startX, d.startY);
   }
