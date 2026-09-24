@@ -298,9 +298,13 @@ button { color: inherit; }
     const src = before[fromCol]; const dst = before[toCol]; const movingCount = src.length - fromIndex;
     const exposesHidden = fromIndex > 0 && src[fromIndex - 1] && !src[fromIndex - 1].faceUp;
     const singleCardToEmpty = dst.length === 0 && movingCount === 1;
+    const joinsSequence = dst.length > 0 && dst[dst.length - 1].faceUp && dst[dst.length - 1].rank === src[fromIndex].rank + 1;
     const opensUsefulColumn = fromIndex === 0 && dst.length > 0;
     const emptyCreated = before[fromCol].length > 0 && after[fromCol].length === 0 && dst.length > 0;
-    return (completedDelta * 180) + (exposesHidden ? 120 : 0) + (emptyCreated || opensUsefulColumn ? 75 : 0) + (singleCardToEmpty ? 35 : 0);
+    const sourceRunLength = movingCount;
+    const targetRunLength = dst.length;
+    const joinedRunBonus = joinsSequence ? Math.min(70, 18 + sourceRunLength * 7 + Math.min(targetRunLength, 5) * 3) : 0;
+    return (completedDelta * 180) + (exposesHidden ? 120 : 0) + (emptyCreated || opensUsefulColumn ? 75 : 0) + joinedRunBonus + (singleCardToEmpty ? 35 : 0);
   }
   function bestHintContinuation(columns, completed, previous) {
     const base = hintBoardValue(columns, completed); let best = 0;
