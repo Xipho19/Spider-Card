@@ -247,7 +247,16 @@ html, body { height:100%; overflow:hidden; }
   }
   function playMoveSound() { playFlipSound(); }
   function playDealSound() { playTone(280, .08, 'triangle', .03); setTimeout(() => playTone(360, .08, 'triangle', .022), 55); }
-  function playWinSound() { [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, .16, 'sine', .035), i * 90)); }
+  let winAudio = null;
+  function playWinSound() {
+    if (!state.soundEnabled || typeof Audio === 'undefined') return;
+    try {
+      if (!winAudio) { winAudio = new Audio('assets/sounds/win.mp3'); winAudio.preload = 'auto'; winAudio.volume = .86; }
+      winAudio.currentTime = 0;
+      const result = winAudio.play();
+      if (result && typeof result.catch === 'function') result.catch(() => {});
+    } catch (_) {}
+  }
   function updateSoundButton() { const btn = $('#soundBtn'); if (btn) { btn.textContent = state.soundEnabled ? '♫ 声音' : '♩ 静音'; btn.setAttribute('aria-pressed', String(state.soundEnabled)); } }
   function rng(seed) { let t = seed >>> 0; return () => { t += 0x6D2B79F5; let x = t; x = Math.imul(x ^ x >>> 15, x | 1); x ^= x + Math.imul(x ^ x >>> 7, x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
   function makeSeed() { return Math.floor(Math.random() * 0xFFFFFFFF); }
