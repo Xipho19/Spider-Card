@@ -288,6 +288,14 @@ html, body { height:100%; overflow:hidden; }
 @keyframes stockCardFly { 0% { opacity:0; transform:translate3d(-130px,-70px,0) rotate(-12deg) scale(.8); } 68% { opacity:1; transform:translate3d(5px,3px,0) rotate(2deg) scale(1.03); } 100% { opacity:1; transform:translate3d(0,0,0) rotate(0) scale(1); } }
 @media (prefers-reduced-motion:reduce) { .card.stock-deal-card { animation-duration:.01ms!important; animation-delay:0ms!important; } }
 
+
+/* Keep the portrait game surface centered on every mobile browser viewport. */
+html, body { width:100%; max-width:100%; }
+body { display:flex; justify-content:center; align-items:stretch; overflow-x:hidden; }
+.app { width:min(430px,100%); max-width:100%; margin-inline:auto; }
+.start-modal { width:100%; max-width:100%; margin-inline:auto; }
+@media (min-width:621px) { body { min-width:0; } .app { width:min(430px,100%); margin-inline:auto; } }
+
 </style>
 </head>
 <body>
