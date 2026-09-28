@@ -31,6 +31,7 @@ button { color: inherit; }
 .brand h1 { font-size: 17px; letter-spacing: .12em; margin:0; font-weight: 750; }
 .brand p { margin:2px 0 0; font-size:12px; color:var(--muted); }
 .top-actions { display:flex; gap:8px; align-items:center; }
+.top-actions #homeBtn { display:block; }
 .ghost, .primary, .icon-btn { border: 1px solid var(--line); border-radius: 11px; padding: 9px 13px; background: rgba(255,255,255,.06); cursor:pointer; transition: transform .15s ease, background .15s ease, border-color .15s ease; }
 .ghost:hover, .icon-btn:hover { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); transform:translateY(-1px); }
 .primary { background: linear-gradient(145deg, #e7bf77, #b97b3f); color:#172a25; border:none; font-weight:800; box-shadow: 0 8px 22px rgba(177,117,57,.22); }
@@ -182,6 +183,7 @@ html, body { height:100%; overflow:hidden; }
   .brand p { display:none; }
   .top-actions .ghost { display:block; padding:7px 8px; font-size:12px; }
   .top-actions #soundBtn { display:none; }
+  .top-actions #homeBtn { display:block; }
   .shell { height:calc(100dvh - 66px); padding:10px 8px 12px; }
   .hud { align-items:flex-start; gap:8px; }
   .stats { width:100%; }
@@ -199,7 +201,7 @@ html, body { height:100%; overflow:hidden; }
 <div class="app">
   <header class="topbar">
     <div class="brand"><div class="brand-mark">♠</div><div><h1>蜘蛛纸牌</h1><p>Spider Solitaire · 清爽桌面版</p></div></div>
-    <div class="top-actions"><button class="ghost" id="undoBtn">↶ 撤回</button><button class="ghost" id="hintBtn">✦ 提示</button><button class="ghost" id="soundBtn">♫ 声音</button><button class="primary" id="newBtn">新牌局</button></div>
+    <div class="top-actions"><button class="ghost home-btn" id="homeBtn">⌂ 返回</button><button class="ghost" id="undoBtn">↶ 撤回</button><button class="ghost" id="hintBtn">✦ 提示</button><button class="ghost" id="soundBtn">♫ 声音</button><button class="primary" id="newBtn">新牌局</button></div>
   </header>
   <main class="shell">
     <section class="hud">
@@ -549,7 +551,16 @@ html, body { height:100%; overflow:hidden; }
   $('#challengeGameBtn').addEventListener('click', () => { $('#startOverlay').classList.remove('open'); newGame(1, makeSeed(), true); });
   $('#continueGameBtn').addEventListener('click', () => $('#startOverlay').classList.remove('open'));
   document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); $('#startOverlay').classList.remove('open'); newGame(mode, makeSeed(), false); }));
-  $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
+  function showStartScreen() {
+    persist();
+    $('#overlay').classList.remove('open');
+    $('#startGameBtn').hidden = false;
+    $('#challengeGameBtn').hidden = false;
+    $('#modeChoice').hidden = true;
+    $('#continueGameBtn').hidden = !state.columns.length;
+    $('#startOverlay').classList.add('open');
+  }
+  $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   preloadCardAssets();
