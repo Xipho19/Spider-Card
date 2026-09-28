@@ -309,7 +309,7 @@ html, body { height:100%; overflow:hidden; }
     state.mode = mode; state.seed = seed >>> 0; state.columns = Array.from({length:8}, () => []); state.stock = []; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
     const deck = makeDeck(state.mode, state.seed);
     let cursor = 0;
-    for (let col=0; col<8; col++) { const count = col < 6 ? 7 : 6; for (let i=0;i<count;i++) state.columns[col].push(deck[cursor++]); }
+    for (let col=0; col<8; col++) { const count = col < 6 ? 6 : 5; for (let i=0;i<count;i++) state.columns[col].push(deck[cursor++]); }
     for (const col of state.columns) col[col.length-1].faceUp = true;
     state.stock = deck.slice(cursor);
     $('#overlay').classList.remove('open');
