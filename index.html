@@ -248,6 +248,16 @@ html, body { height:100%; overflow:hidden; }
   .home-fan { height:175px; transform:scale(.86); transform-origin:top center; margin-bottom:-26px; }
   .home-stats { margin-top:9px; }
 }
+/* Expanded rules panel */
+.help-modal { width:min(390px,100%); max-height:min(78dvh,650px); overflow:auto; text-align:left; padding:24px 22px 20px; }
+.help-modal h2 { text-align:center; margin:0 0 5px; }
+.help-lead { text-align:center; margin:0 0 18px!important; font-size:12px; }
+.help-list { display:grid; gap:11px; margin:0; padding:0; list-style:none; }
+.help-list li { display:grid; grid-template-columns:30px 1fr; gap:9px; align-items:start; padding:10px 11px; border-radius:12px; background:rgba(255,255,255,.055); border:1px solid rgba(224,240,224,.1); }
+.help-list b { display:grid; place-items:center; width:27px; height:27px; border-radius:9px; background:rgba(228,180,106,.18); color:#f4d397; font-size:14px; }
+.help-list strong { display:block; font-size:14px; color:#f2e7c9; margin-bottom:3px; }
+.help-list span { display:block; color:var(--muted); font-size:12px; line-height:1.5; }
+.help-close { display:block; width:100%; margin-top:17px; }
 </style>
 </head>
 <body>
@@ -269,7 +279,7 @@ html, body { height:100%; overflow:hidden; }
   </main>
 </div>
 <div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="home-brand"><div class="brand-mark">♠</div><h2>蜘蛛纸牌</h2><p class="home-subtitle">SPIDER SOLITAIRE</p><p class="home-tagline">在蛛网与牌面之间，完成你的下一局挑战</p></div><div class="home-fan" aria-hidden="true"><div class="home-card"><img src="assets/cards/spades-A.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-J.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-Q.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-K.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-10.png" alt=""></div></div><div class="home-actions"><button id="startGameBtn" class="home-mode-btn home-classic-btn"><span><strong>经典模式</strong><small>单花色 · 双花色 · 四花色</small></span><span class="mode-icon">♠</span></button><button id="challengeGameBtn" class="home-mode-btn home-challenge-btn"><span><strong>挑战模式</strong><small>连续挑战，完成一局进入下一局</small></span><span class="mode-icon">∞</span></button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button></div><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div><div class="home-stats"><div class="home-stat"><strong>1—4</strong><span>花色难度</span></div><div class="home-stat"><strong>78</strong><span>总牌数</span></div><div class="home-stat"><strong>6</strong><span>完成牌组</span></div></div><div class="home-footer"><span>♣ 本地保存牌局进度</span><button type="button" id="homeHelpBtn">玩法说明&nbsp; ›</button></div></div></div>
-<div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2>恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div>
+<div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2>恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div><div id="helpOverlay" class="overlay"><div class="modal help-modal"><div class="emoji">♠</div><h2>玩法说明</h2><p class="help-lead">把所有牌按同一花色从 K 到 A 排成完整序列</p><ul class="help-list"><li><b>1</b><div><strong>移动牌组</strong><span>点击一张已翻开的牌选择整组，再点击目标列；也可以直接拖动。</span></div></li><li><b>2</b><div><strong>叠放规则</strong><span>只能把牌放到比它大 1 点的牌下面，例如 5 可以放到 6 下面。</span></div></li><li><b>3</b><div><strong>发新牌</strong><span>点击底部发牌区，每一列获得 1 张新牌。空列也可以继续发牌。</span></div></li><li><b>4</b><div><strong>撤回与提示</strong><span>撤回可以恢复上一步；提示会优先寻找能翻开暗牌或整理同花色牌组的有效移动。</span></div></li><li><b>5</b><div><strong>完成牌组</strong><span>同一花色从 K、Q、J 一直到 A 连成完整 13 张后会自动收进完成区。</span></div></li><li><b>∞</b><div><strong>挑战模式</strong><span>挑战模式同样可以选择单花色、双花色或四花色；完成一局后会自动开始下一局。</span></div></li></ul><button class="primary help-close" id="closeHelp">知道了</button></div></div>
 <div id="toast" class="toast"></div>
 <script>
 (() => {
@@ -600,10 +610,12 @@ html, body { height:100%; overflow:hidden; }
   document.addEventListener('pointercancel', finishPointerDrag);
   let toastTimer; function toast(msg) { const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'), 1800); }
   document.querySelectorAll('.mode-tab').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.mode); if (mode!==state.mode || state.challengeMode) newGame(mode, makeSeed(), false); }));
-  $('#startGameBtn').addEventListener('click', () => { $('#startGameBtn').hidden = true; $('#challengeGameBtn').hidden = true; $('#continueGameBtn').hidden = true; $('#modeChoice').hidden = false; });
-  $('#challengeGameBtn').addEventListener('click', () => { $('#startOverlay').classList.remove('open'); newGame(1, makeSeed(), true); });
+  let pendingChallenge = false;
+  function showModeChoice(challenge) { pendingChallenge = challenge === true; $('#startGameBtn').hidden = true; $('#challengeGameBtn').hidden = true; $('#continueGameBtn').hidden = true; $('#modeChoice').hidden = false; }
+  $('#startGameBtn').addEventListener('click', () => showModeChoice(false));
+  $('#challengeGameBtn').addEventListener('click', () => showModeChoice(true));
   $('#continueGameBtn').addEventListener('click', () => $('#startOverlay').classList.remove('open'));
-  document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); $('#startOverlay').classList.remove('open'); newGame(mode, makeSeed(), false); }));
+  document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); const challenge = pendingChallenge; $('#startOverlay').classList.remove('open'); newGame(mode, makeSeed(), challenge); pendingChallenge = false; }));
   function showStartScreen() {
     persist();
     $('#overlay').classList.remove('open');
@@ -614,7 +626,7 @@ html, body { height:100%; overflow:hidden; }
     $('#startOverlay').classList.add('open');
   }
   $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
-  $('#homeHelpBtn')?.addEventListener('click', () => toast('拖动或点击牌组移动；提示会标出当前可推进的一步'));
+  $('#homeHelpBtn')?.addEventListener('click', () => $('#helpOverlay').classList.add('open')); $('#closeHelp')?.addEventListener('click', () => $('#helpOverlay').classList.remove('open'));
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   preloadCardAssets();
@@ -624,6 +636,7 @@ html, body { height:100%; overflow:hidden; }
 </script>
 </body>
 </html>
+
 
 
 
