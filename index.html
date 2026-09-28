@@ -93,6 +93,7 @@ button { color: inherit; }
 .start-modal h2 { font-size:34px; margin:0 0 8px; letter-spacing:.08em; }
 .start-modal p { color:var(--muted); margin:0 0 26px; }
 .start-button { min-width:190px; font-size:19px; padding:13px 24px; }
+.continue-button { margin-top:10px; }
 .mode-choice { display:grid; gap:10px; margin-top:18px; }
 .mode-choice[hidden] { display:none; }
 .mode-choice button { width:100%; padding:13px 16px; border-radius:13px; border:1px solid var(--line); background:rgba(255,255,255,.07); cursor:pointer; font-size:16px; }
@@ -209,7 +210,7 @@ html, body { height:100%; overflow:hidden; }
     <div class="footer-note"><span class="footer-dot"></span><span>本地离线运行 · 每局随机种子可复盘 · 原创桌面与牌背</span></div>
   </main>
 </div>
-<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="brand-mark">♠</div><h2>织网纸牌</h2><p>选择难度，开始你的蜘蛛纸牌牌局</p><button id="startGameBtn" class="primary start-button">开始游戏</button><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div></div></div>
+<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="brand-mark">♠</div><h2>织网纸牌</h2><p>选择难度，开始你的蜘蛛纸牌牌局</p><button id="startGameBtn" class="primary start-button">开始游戏</button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div></div></div>
 <div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2>恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div>
 <div id="toast" class="toast"></div>
 <script>
@@ -493,14 +494,15 @@ html, body { height:100%; overflow:hidden; }
   document.addEventListener('pointercancel', finishPointerDrag);
   let toastTimer; function toast(msg) { const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'), 1800); }
   document.querySelectorAll('.mode-tab').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.mode); if (mode!==state.mode) newGame(mode); }));
-  $('#startGameBtn').addEventListener('click', () => { $('#startGameBtn').hidden = true; $('#modeChoice').hidden = false; });
+  $('#startGameBtn').addEventListener('click', () => { $('#startGameBtn').hidden = true; $('#continueGameBtn').hidden = true; $('#modeChoice').hidden = false; });
+  $('#continueGameBtn').addEventListener('click', () => $('#startOverlay').classList.remove('open'));
   document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); $('#startOverlay').classList.remove('open'); newGame(mode); }));
   $('#newBtn').addEventListener('click', () => newGame()); $('#playAgain').addEventListener('click', () => newGame()); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   preloadCardAssets();
   const restored = restoreSavedGame();
-  if (restored) $('#startOverlay').classList.remove('open');
+  if (restored) $('#continueGameBtn').hidden = false;
 })();
 </script>
 </body>
