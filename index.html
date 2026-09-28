@@ -321,7 +321,7 @@ html, body { height:100%; overflow:hidden; }
     for (let attempt = 0; attempt < 256; attempt++) {
       chosenSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
       const candidate = buildDeal(makeDeck(state.mode, chosenSeed));
-      if (dealHasOpeningMove(candidate.columns)) { deal = candidate; break; }
+      if (dealHasOpeningMove(candidate.columns) && solveDeal(candidate.columns, candidate.stock, 0)) { deal = candidate; break; }
       deal = candidate;
     }
     state.seed = chosenSeed; state.columns = deal.columns; state.stock = deal.stock;
@@ -392,6 +392,35 @@ html, body { height:100%; overflow:hidden; }
       for (let to=0; to<columns.length; to++) if (canMoveOn(columns, from, index, to)) moves.push({from, to, index});
     }
     return moves;
+  }
+  function solverStateKey(columns, stock, completed) {
+    const cols = columns.map(col => col.map(card => `${card.id}${card.faceUp ? 'u' : 'd'}`).join(',')).sort().join('|');
+    return `${completed};${stock.length};${cols}`;
+  }
+  function solveDeal(columns, stock, completed = 0) {
+    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:120000, maxMs:900 };
+    function search(currentColumns, currentStock, currentCompleted) {
+      if (currentCompleted >= 6) return true;
+      if (++context.nodes > context.maxNodes || Date.now() - context.started > context.maxMs) return false;
+      const key = solverStateKey(currentColumns, currentStock, currentCompleted);
+      if (context.seen.has(key)) return false;
+      context.seen.add(key);
+      const moves = enumerateHintMoves(currentColumns).map(move => {
+        const sim = simulateHintMove(currentColumns, currentCompleted, move.from, move.index, move.to);
+        const impact = hintMoveImpact(currentColumns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
+        return {...move, sim, score: impact + sim.completedDelta * 1000};
+      }).sort((a,b) => b.score - a.score);
+      for (const move of moves) if (search(move.sim.columns, currentStock, move.sim.completed)) return true;
+      if (currentStock.length) {
+        const nextColumns = clone(currentColumns); const nextStock = currentStock.slice();
+        for (let i=0; i<nextColumns.length && nextStock.length; i++) {
+          const card = nextStock.pop(); card.faceUp = true; nextColumns[i].push(card); completeRunsOn(nextColumns, i);
+        }
+        if (search(nextColumns, nextStock, currentCompleted)) return true;
+      }
+      return false;
+    }
+    return search(clone(columns), clone(stock), completed);
   }
   function hintBoardValue(columns, completed) {
     let hidden = 0, faceUp = 0, empty = 0;
