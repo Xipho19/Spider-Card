@@ -298,9 +298,10 @@ html, body { height:100%; overflow:hidden; }
   function saveSnapshot() { state.history.push({ columns: clone(state.columns), stock: clone(state.stock), completed: state.completed, moves: state.moves, elapsedBefore: elapsed() }); if (state.history.length > 100) state.history.shift(); }
   function restoreSnapshot(s) { state.columns = clone(s.columns); state.stock = clone(s.stock); state.completed = s.completed; state.moves = s.moves; state.elapsedBefore = s.elapsedBefore; state.startedAt = Date.now(); state.selected = null; state.hint = null; render(); persist(); }
   function makeDeck(mode, seed) {
-    const suits = mode === 1 ? [SUITS[0]] : mode === 2 ? [SUITS[0], SUITS[1]] : SUITS;
+    // Six complete runs are required, so every game contains exactly 6 × 13 = 78 cards.
+    const runSuits = Array.from({length:6}, (_, i) => mode === 1 ? SUITS[0] : mode === 2 ? SUITS[i % 2] : SUITS[i % 4]);
     const deck = []; let id = 0;
-    for (const suit of suits) for (let copy = 0; copy < 8 / suits.length; copy++) for (let rank = 1; rank <= 13; rank++) deck.push({ id:id++, rank, suit, faceUp:false });
+    for (const suit of runSuits) for (let rank = 1; rank <= 13; rank++) deck.push({ id:id++, rank, suit, faceUp:false });
     const random = rng(seed); for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
     return deck;
   }
