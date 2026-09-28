@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#102c2b" />
-<title>织网纸牌 · Spider Solitaire</title>
+<title>蜘蛛纸牌 · Spider Solitaire</title>
 <style>
 :root {
   --bg: #091a1a;
@@ -195,7 +195,7 @@ html, body { height:100%; overflow:hidden; }
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="brand"><div class="brand-mark">♠</div><div><h1>织网纸牌</h1><p>Spider Solitaire · 清爽桌面版</p></div></div>
+    <div class="brand"><div class="brand-mark">♠</div><div><h1>蜘蛛纸牌</h1><p>Spider Solitaire · 清爽桌面版</p></div></div>
     <div class="top-actions"><button class="ghost" id="undoBtn">↶ 撤回</button><button class="ghost" id="hintBtn">✦ 提示</button><button class="ghost" id="soundBtn">♫ 声音</button><button class="primary" id="newBtn">新牌局</button></div>
   </header>
   <main class="shell">
@@ -211,7 +211,7 @@ html, body { height:100%; overflow:hidden; }
     <div class="footer-note"><span class="footer-dot"></span><span>本地离线运行 · 每局随机种子可复盘 · 原创桌面与牌背</span></div>
   </main>
 </div>
-<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="brand-mark">♠</div><h2>织网纸牌</h2><p>选择难度，开始你的蜘蛛纸牌牌局</p><button id="startGameBtn" class="primary start-button">开始游戏</button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div></div></div>
+<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="brand-mark">♠</div><h2>蜘蛛纸牌</h2><p>选择模式，开始你的蜘蛛纸牌牌局</p><button id="startGameBtn" class="primary start-button">经典模式</button><button id="challengeGameBtn" class="ghost start-button challenge-button">挑战模式</button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div></div></div>
 <div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2>恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div>
 <div id="toast" class="toast"></div>
 <script>
@@ -219,7 +219,7 @@ html, body { height:100%; overflow:hidden; }
   const SUITS = ['♠','♥','♦','♣'];
   const SUIT_ASSET = {'♣':'clubs','♦':'diamonds','♥':'hearts','♠':'spades'};
   const RED = new Set(['♥','♦']);
-  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false };
+  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false };
   const $ = (s) => document.querySelector(s);
   const board = $('#board');
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
@@ -245,7 +245,7 @@ html, body { height:100%; overflow:hidden; }
   function persist() {
     try {
       if (typeof localStorage === 'undefined') return;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ mode: state.mode, columns: state.columns, stock: state.stock, completed: state.completed, moves: state.moves, history: state.history, selected: null, seed: state.seed, elapsedBefore: elapsed(), soundEnabled: state.soundEnabled }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ mode: state.mode, columns: state.columns, stock: state.stock, completed: state.completed, moves: state.moves, history: state.history, selected: null, seed: state.seed, elapsedBefore: elapsed(), soundEnabled: state.soundEnabled, challengeMode: state.challengeMode }));
     } catch (_) {}
   }
   function restoreSavedGame() {
@@ -254,7 +254,7 @@ html, body { height:100%; overflow:hidden; }
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (!saved || !Array.isArray(saved.columns) || saved.columns.length !== 8 || !Array.isArray(saved.stock)) return false;
       state.mode = [1,2,4].includes(saved.mode) ? saved.mode : 1;
-      state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false;
+      state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false; state.challengeMode = saved.challengeMode === true;
       render(); checkWin(); updateSoundButton(); return true;
     } catch (_) { return false; }
   }
@@ -305,8 +305,8 @@ html, body { height:100%; overflow:hidden; }
     const random = rng(seed); for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
     return deck;
   }
-  function newGame(mode = state.mode, seed = makeSeed()) {
-    state.mode = mode; state.seed = seed >>> 0; state.columns = Array.from({length:8}, () => []); state.stock = []; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
+  function newGame(mode = state.mode, seed = makeSeed(), challenge = state.challengeMode) {
+    state.mode = mode; state.challengeMode = challenge === true; state.seed = seed >>> 0; state.columns = Array.from({length:8}, () => []); state.stock = []; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
     const deck = makeDeck(state.mode, state.seed);
     let cursor = 0;
     for (let col=0; col<8; col++) { const count = col < 6 ? 6 : 5; for (let i=0;i<count;i++) state.columns[col].push(deck[cursor++]); }
@@ -424,7 +424,12 @@ html, body { height:100%; overflow:hidden; }
   }
   function showHint() { const h = findHint(); state.hint = h; render(); if (!h) toast('当前没有可推进的移动'); else if (h.stock) toast('暂时没有可推进的移动，发下一轮牌'); else toast(`试试把第 ${h.from+1} 列移动到第 ${h.to+1} 列`); }
   function undo() { const prev = state.history.pop(); if (!prev) { toast('还没有可撤回的操作'); return; } restoreSnapshot(prev); playMoveSound(); }
-  function checkWin() { if (state.completed >= 6) { const finalTime = elapsed(); state.elapsedBefore = finalTime; state.startedAt = 0; $('#winText').textContent = `用时 ${fmtTime(finalTime)} · ${state.moves} 步 · 种子 ${state.seed}`; $('#overlay').classList.add('open'); persist(); playWinSound(); } }
+  function checkWin() {
+    if (state.completed < 6) return;
+    const finalTime = elapsed(); state.elapsedBefore = finalTime; state.startedAt = 0; persist(); playWinSound();
+    if (state.challengeMode) { toast('本局完成，挑战模式开始下一局'); setTimeout(() => newGame(1, makeSeed(), true), 900); return; }
+    $('#winText').textContent = `用时 ${fmtTime(finalTime)} · ${state.moves} 步 · 种子 ${state.seed}`; $('#overlay').classList.add('open');
+  }
   function fitBoardToViewport() {
     const wrap = $('.board-wrap'); const boardEl = $('#board');
     if (!wrap || !boardEl || !state.columns.length || typeof getComputedStyle !== 'function') return;
@@ -495,11 +500,12 @@ html, body { height:100%; overflow:hidden; }
   document.addEventListener('pointerup', finishPointerDrag);
   document.addEventListener('pointercancel', finishPointerDrag);
   let toastTimer; function toast(msg) { const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'), 1800); }
-  document.querySelectorAll('.mode-tab').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.mode); if (mode!==state.mode) newGame(mode); }));
-  $('#startGameBtn').addEventListener('click', () => { $('#startGameBtn').hidden = true; $('#continueGameBtn').hidden = true; $('#modeChoice').hidden = false; });
+  document.querySelectorAll('.mode-tab').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.mode); if (mode!==state.mode || state.challengeMode) newGame(mode, makeSeed(), false); }));
+  $('#startGameBtn').addEventListener('click', () => { $('#startGameBtn').hidden = true; $('#challengeGameBtn').hidden = true; $('#continueGameBtn').hidden = true; $('#modeChoice').hidden = false; });
+  $('#challengeGameBtn').addEventListener('click', () => { $('#startOverlay').classList.remove('open'); newGame(1, makeSeed(), true); });
   $('#continueGameBtn').addEventListener('click', () => $('#startOverlay').classList.remove('open'));
-  document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); $('#startOverlay').classList.remove('open'); newGame(mode); }));
-  $('#newBtn').addEventListener('click', () => newGame()); $('#playAgain').addEventListener('click', () => newGame()); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
+  document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); $('#startOverlay').classList.remove('open'); newGame(mode, makeSeed(), false); }));
+  $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   preloadCardAssets();
