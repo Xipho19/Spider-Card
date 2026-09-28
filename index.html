@@ -202,6 +202,52 @@ html, body { height:100%; overflow:hidden; }
 .brand h1 { white-space:nowrap; font-size:14px; letter-spacing:.04em; }
 .top-actions { min-width:0; flex-wrap:nowrap; gap:4px; }
 .top-actions .ghost, .top-actions .primary { white-space:nowrap; padding:6px 7px; border-radius:9px; font-size:11px; line-height:1.2; flex:0 0 auto; }
+/* Home screen visual refresh */
+.start-overlay { background:rgba(2,12,12,.72); backdrop-filter:blur(12px); }
+.start-modal { position:relative; isolation:isolate; width:min(430px,100vw); min-height:100dvh; height:100dvh; justify-content:flex-start; overflow:hidden; padding:54px 24px 28px; background:linear-gradient(180deg, rgba(8,31,29,.74), rgba(6,22,23,.94)); }
+.start-modal::before { content:''; position:absolute; inset:0; z-index:-2; background:linear-gradient(180deg, rgba(7,38,34,.20), rgba(4,16,18,.88)), url('assets/game-bg.jpg') center/cover no-repeat; opacity:.9; }
+.start-modal::after { content:''; position:absolute; inset:0; z-index:-1; background:radial-gradient(circle at 50% 30%, rgba(228,180,106,.20), transparent 24%), linear-gradient(180deg, transparent 30%, rgba(3,12,13,.76) 72%); pointer-events:none; }
+.home-brand { position:relative; z-index:1; margin-top:4px; }
+.start-modal .brand-mark { margin:0 auto 12px; width:58px; height:58px; font-size:32px; border-radius:18px; box-shadow:0 12px 30px rgba(0,0,0,.35), 0 0 0 1px rgba(255,230,181,.28); }
+.start-modal h2 { margin:0; font-size:35px; line-height:1.08; letter-spacing:.13em; text-shadow:0 3px 18px rgba(0,0,0,.4); }
+.home-subtitle { margin:9px 0 0!important; color:#e9d8af!important; font-size:11px; letter-spacing:.28em; text-transform:uppercase; }
+.home-tagline { margin:10px 0 0!important; font-size:13px; color:rgba(234,243,234,.7)!important; }
+.home-fan { position:relative; width:100%; height:225px; margin:18px auto 4px; display:flex; justify-content:center; align-items:flex-start; }
+.home-card { position:absolute; top:20px; width:92px; height:132px; padding:0; overflow:hidden; border-radius:5px; background:#fff; border:1px solid rgba(255,255,255,.8); box-shadow:0 14px 30px rgba(0,0,0,.4), 0 0 0 1px rgba(9,28,25,.45); transform-origin:50% 115%; animation:homeCardFloat 4s ease-in-out infinite; }
+.home-card img { width:100%; height:100%; object-fit:fill; display:block; }
+.home-card:nth-child(1) { transform:rotate(-19deg) translateY(22px); animation-delay:-.7s; }
+.home-card:nth-child(2) { transform:rotate(-11deg) translateY(7px); animation-delay:-1.4s; }
+.home-card:nth-child(3) { transform:rotate(-3deg) translateY(0); animation-delay:-2.1s; z-index:3; }
+.home-card:nth-child(4) { transform:rotate(6deg) translateY(5px); animation-delay:-2.8s; z-index:2; }
+.home-card:nth-child(5) { transform:rotate(15deg) translateY(16px); animation-delay:-3.5s; }
+@keyframes homeCardFloat { 0%,100% { margin-top:0; } 50% { margin-top:-5px; } }
+.home-actions { position:relative; z-index:2; width:100%; display:grid; gap:11px; margin-top:-2px; }
+.home-mode-btn { position:relative; display:flex; align-items:center; justify-content:space-between; width:100%; min-height:66px; padding:12px 16px; text-align:left; border-radius:17px; cursor:pointer; transition:transform .18s ease, filter .18s ease, border-color .18s ease; }
+.home-mode-btn:hover { transform:translateY(-2px); filter:brightness(1.06); }
+.home-mode-btn:active { transform:scale(.98); }
+.home-mode-btn strong { display:block; font-size:18px; line-height:1.15; }
+.home-mode-btn small { display:block; margin-top:4px; font-size:11px; color:rgba(255,255,255,.68); }
+.home-mode-btn .mode-icon { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; font-size:22px; }
+.home-classic-btn { background:linear-gradient(135deg, rgba(226,183,105,.98), rgba(165,103,48,.98)); color:#182d29; border:1px solid rgba(255,229,168,.7); box-shadow:0 12px 28px rgba(177,117,57,.28); }
+.home-classic-btn small { color:rgba(24,45,41,.72); }
+.home-classic-btn .mode-icon { background:rgba(255,245,212,.25); }
+.home-challenge-btn { background:rgba(16,48,46,.82); border:1px solid rgba(158,208,182,.35); color:#eef5ed; box-shadow:0 10px 22px rgba(0,0,0,.2); }
+.home-challenge-btn .mode-icon { background:rgba(134,104,181,.38); color:#eadfff; }
+.home-footer { position:relative; z-index:1; width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; color:rgba(234,243,234,.62); font-size:11px; }
+.home-footer button { border:0; background:transparent; color:#e6c98e; padding:5px 0; cursor:pointer; font-size:11px; }
+.home-footer button:hover { color:#fff0c9; }
+.continue-button { width:100%; margin-top:10px; }
+.home-stats { display:flex; gap:8px; width:100%; margin-top:15px; }
+.home-stat { flex:1; padding:9px 7px; border:1px solid rgba(224,240,224,.12); border-radius:12px; background:rgba(0,0,0,.18); text-align:center; }
+.home-stat strong { display:block; color:#f1d49a; font-size:15px; }
+.home-stat span { display:block; margin-top:3px; font-size:10px; color:rgba(234,243,234,.55); }
+.mode-choice { position:relative; z-index:3; width:100%; margin-top:14px; grid-template-columns:repeat(3,1fr); gap:8px; }
+.mode-choice button { padding:14px 5px; border-radius:14px; font-size:14px; background:rgba(12,47,43,.9); }
+@media (max-height:760px) {
+  .start-modal { padding-top:28px; }
+  .home-fan { height:175px; transform:scale(.86); transform-origin:top center; margin-bottom:-26px; }
+  .home-stats { margin-top:9px; }
+}
 </style>
 </head>
 <body>
@@ -222,7 +268,7 @@ html, body { height:100%; overflow:hidden; }
     <div class="footer-note"><span class="footer-dot"></span><span>本地离线运行 · 每局随机种子可复盘 · 原创桌面与牌背</span></div>
   </main>
 </div>
-<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="brand-mark">♠</div><h2>蜘蛛纸牌</h2><p>选择模式，开始你的蜘蛛纸牌牌局</p><button id="startGameBtn" class="primary start-button">经典模式</button><button id="challengeGameBtn" class="ghost start-button challenge-button">挑战模式</button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div></div></div>
+<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="home-brand"><div class="brand-mark">♠</div><h2>蜘蛛纸牌</h2><p class="home-subtitle">SPIDER SOLITAIRE</p><p class="home-tagline">在蛛网与牌面之间，完成你的下一局挑战</p></div><div class="home-fan" aria-hidden="true"><div class="home-card"><img src="assets/cards/spades-A.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-J.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-Q.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-K.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-10.png" alt=""></div></div><div class="home-actions"><button id="startGameBtn" class="home-mode-btn home-classic-btn"><span><strong>经典模式</strong><small>单花色 · 双花色 · 四花色</small></span><span class="mode-icon">♠</span></button><button id="challengeGameBtn" class="home-mode-btn home-challenge-btn"><span><strong>挑战模式</strong><small>连续挑战，完成一局进入下一局</small></span><span class="mode-icon">∞</span></button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button></div><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div><div class="home-stats"><div class="home-stat"><strong>1—4</strong><span>花色难度</span></div><div class="home-stat"><strong>78</strong><span>总牌数</span></div><div class="home-stat"><strong>6</strong><span>完成牌组</span></div></div><div class="home-footer"><span>♣ 本地保存牌局进度</span><button type="button" id="homeHelpBtn">玩法说明&nbsp; ›</button></div></div></div>
 <div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2>恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div>
 <div id="toast" class="toast"></div>
 <script>
@@ -568,6 +614,7 @@ html, body { height:100%; overflow:hidden; }
     $('#startOverlay').classList.add('open');
   }
   $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
+  #homeHelpBtn?.addEventListener('click', () => toast('拖动或点击牌组移动；提示会标出当前可推进的一步'));
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   preloadCardAssets();
@@ -577,6 +624,8 @@ html, body { height:100%; overflow:hidden; }
 </script>
 </body>
 </html>
+
+
 
 
 
