@@ -201,7 +201,7 @@ html, body { height:100%; overflow:hidden; }
   <main class="shell">
     <section class="hud">
       <div class="mode-tabs" aria-label="难度选择"><button class="mode-tab active" data-mode="1">单花色</button><button class="mode-tab" data-mode="2">双花色</button><button class="mode-tab" data-mode="4">四色挑战</button></div>
-      <div class="stats"><div class="stat"><small>时间</small><strong id="time">00:00</strong></div><div class="stat"><small>步数</small><strong id="moves">0</strong></div><div class="stat"><small>已完成</small><strong id="completed">0 / 8</strong></div><div class="stat"><small>牌局</small><strong id="seedLabel">—</strong></div></div>
+      <div class="stats"><div class="stat"><small>时间</small><strong id="time">00:00</strong></div><div class="stat"><small>步数</small><strong id="moves">0</strong></div><div class="stat"><small>已完成</small><strong id="completed">0 / 6</strong></div><div class="stat"><small>牌局</small><strong id="seedLabel">—</strong></div></div>
     </section>
     <section class="bottom-row deal-row">
       <div class="stock-area"><button id="stock" class="stock" aria-label="发牌"><span id="stockCount">5</span></button><div><div class="stock-label">剩余发牌轮数</div><div id="statusText" class="stock-label">选择一组同花色连续牌开始移动</div></div></div>
@@ -423,7 +423,7 @@ html, body { height:100%; overflow:hidden; }
   }
   function showHint() { const h = findHint(); state.hint = h; render(); if (!h) toast('当前没有可推进的移动'); else if (h.stock) toast('暂时没有可推进的移动，发下一轮牌'); else toast(`试试把第 ${h.from+1} 列移动到第 ${h.to+1} 列`); }
   function undo() { const prev = state.history.pop(); if (!prev) { toast('还没有可撤回的操作'); return; } restoreSnapshot(prev); playMoveSound(); }
-  function checkWin() { if (state.completed >= 8) { const finalTime = elapsed(); state.elapsedBefore = finalTime; state.startedAt = 0; $('#winText').textContent = `用时 ${fmtTime(finalTime)} · ${state.moves} 步 · 种子 ${state.seed}`; $('#overlay').classList.add('open'); persist(); playWinSound(); } }
+  function checkWin() { if (state.completed >= 6) { const finalTime = elapsed(); state.elapsedBefore = finalTime; state.startedAt = 0; $('#winText').textContent = `用时 ${fmtTime(finalTime)} · ${state.moves} 步 · 种子 ${state.seed}`; $('#overlay').classList.add('open'); persist(); playWinSound(); } }
   function fitBoardToViewport() {
     const wrap = $('.board-wrap'); const boardEl = $('#board');
     if (!wrap || !boardEl || !state.columns.length || typeof getComputedStyle !== 'function') return;
@@ -450,7 +450,7 @@ html, body { height:100%; overflow:hidden; }
       column.addEventListener('dragover', e => { e.preventDefault(); column.classList.add('drop-target'); }); column.addEventListener('dragleave', () => column.classList.remove('drop-target')); column.addEventListener('drop', e => { e.preventDefault(); column.classList.remove('drop-target'); const d = e.dataTransfer.getData('text/plain').split(',').map(Number); if (!move(d[0],d[1],ci)) toast('这组牌不能放到此列'); });
       col.forEach((card, idx) => { const el = document.createElement('div'); el.className = 'card ' + (card.faceUp ? 'face-up ' + (RED.has(card.suit)?'red':'black') : 'face-down') + (state.dealFlash && card.faceUp ? ' deal-in' : ''); el.dataset.col=ci; el.dataset.index=idx; if (state.selected && state.selected.col===ci && idx>=state.selected.index) el.classList.add('selected'); if (state.hint && !state.hint.stock && ((state.hint.from===ci && idx===state.hint.index) || (state.hint.to===ci && idx===col.length-1))) el.classList.add('hint'); el.draggable = false;
         if (card.faceUp) { el.setAttribute('aria-label', `${rankName(card.rank)}${card.suit}`); el.innerHTML = `<img class="card-art" src="${cardAsset(card)}" alt="${rankName(card.rank)}${card.suit}" draggable="false" loading="eager" decoding="sync" fetchpriority="high">`; el.addEventListener('click', e => { e.stopPropagation(); clickCard(ci,idx); }); el.addEventListener('pointerdown', e => beginPointerDrag(e, ci, idx, el)); } column.appendChild(el); }); board.appendChild(column); });
-    $('#stockCount').textContent = Math.ceil(state.stock.length / 8); $('#stock').classList.toggle('empty', !state.stock.length); $('#stock').classList.toggle('hint-stock', Boolean(state.hint && state.hint.stock)); $('#moves').textContent = state.moves; $('#completed').textContent = `${state.completed} / 8`; $('#seedLabel').textContent = String(state.seed).slice(-6); $('#time').textContent = fmtTime(elapsed()); $('#undoBtn').disabled = !state.history.length; $('#undoBtn').style.opacity = state.history.length ? '1' : '.45'; updateSoundButton();
+    $('#stockCount').textContent = Math.ceil(state.stock.length / 8); $('#stock').classList.toggle('empty', !state.stock.length); $('#stock').classList.toggle('hint-stock', Boolean(state.hint && state.hint.stock)); $('#moves').textContent = state.moves; $('#completed').textContent = `${state.completed} / 6`; $('#seedLabel').textContent = String(state.seed).slice(-6); $('#time').textContent = fmtTime(elapsed()); $('#undoBtn').disabled = !state.history.length; $('#undoBtn').style.opacity = state.history.length ? '1' : '.45'; updateSoundButton();
     document.querySelectorAll('.mode-tab').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.mode)===state.mode));
     scheduleBoardFit();
   }
