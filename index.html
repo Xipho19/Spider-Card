@@ -399,7 +399,7 @@ html, body { height:100%; overflow:hidden; }
   function newGame(mode = state.mode, seed = makeSeed(), challenge = state.challengeMode) {
     state.mode = mode; state.challengeMode = challenge === true; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
     let deal = null; let chosenSeed = seed >>> 0;
-    for (let attempt = 0; attempt < 256; attempt++) {
+    for (let attempt = 0; attempt < 32; attempt++) {
       chosenSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
       const candidate = buildDeal(makeDeck(state.mode, chosenSeed));
       if (dealHasOpeningMove(candidate.columns) && solveDeal(candidate.columns, candidate.stock, 0)) { deal = candidate; break; }
@@ -479,7 +479,7 @@ html, body { height:100%; overflow:hidden; }
     return `${completed};${stock.length};${cols}`;
   }
   function solveDeal(columns, stock, completed = 0) {
-    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:120000, maxMs:900 };
+    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:18000, maxMs:120 };
     function search(currentColumns, currentStock, currentCompleted) {
       if (currentCompleted >= 6) return true;
       if (++context.nodes > context.maxNodes || Date.now() - context.started > context.maxMs) return false;
