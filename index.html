@@ -296,6 +296,9 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
 .start-modal { width:100%; max-width:100%; margin-inline:auto; }
 @media (min-width:621px) { body { min-width:0; } .app { width:min(430px,100%); margin-inline:auto; } }
 
+
+/* Help is a standalone page opened from the home screen. */
+#helpOverlay { z-index:70; }
 </style>
 </head>
 <body>
@@ -685,7 +688,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     $('#startOverlay').classList.add('open');
   }
   $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), false)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
-  $('#homeHelpBtn')?.addEventListener('click', () => $('#helpOverlay').classList.add('open')); $('#closeHelp')?.addEventListener('click', () => $('#helpOverlay').classList.remove('open')); $('#modeCancel')?.addEventListener('click', () => { $('#modeOverlay').classList.remove('open'); $('#startOverlay').classList.add('open'); });
+  $('#homeHelpBtn')?.addEventListener('click', () => { $('#startOverlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#helpOverlay').classList.add('open'); }); $('#closeHelp')?.addEventListener('click', () => { $('#helpOverlay').classList.remove('open'); $('#startOverlay').classList.add('open'); }); $('#modeCancel')?.addEventListener('click', () => { $('#modeOverlay').classList.remove('open'); $('#startOverlay').classList.add('open'); });
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (state.startedAt) $('#time').textContent = fmtTime(elapsed()); }, 1000);
   preloadCardAssets();
