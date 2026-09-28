@@ -282,6 +282,12 @@ html, body { height:100%; overflow:hidden; }
 @keyframes initialCardFlip { 0% { transform:perspective(500px) rotateY(90deg) scale(.96); filter:brightness(.78); } 100% { transform:perspective(500px) rotateY(0deg) scale(1); filter:brightness(1); } }
 @media (prefers-reduced-motion:reduce) { .card.initial-deal-card,.card.initial-flip-card { animation-duration:.01ms!important; animation-delay:0ms!important; } }
 
+
+/* Stock deal animation: cards enter columns from left to right */
+.card.stock-deal-card { z-index:24; animation:stockCardFly .34s cubic-bezier(.18,.72,.24,1) both; animation-delay:var(--stock-delay,0ms); }
+@keyframes stockCardFly { 0% { opacity:0; transform:translate3d(-130px,-70px,0) rotate(-12deg) scale(.8); } 68% { opacity:1; transform:translate3d(5px,3px,0) rotate(2deg) scale(1.03); } 100% { opacity:1; transform:translate3d(0,0,0) rotate(0) scale(1); } }
+@media (prefers-reduced-motion:reduce) { .card.stock-deal-card { animation-duration:.01ms!important; animation-delay:0ms!important; } }
+
 </style>
 </head>
 <body>
@@ -458,7 +464,11 @@ html, body { height:100%; overflow:hidden; }
   }
   function dealStock() {
     if (!state.stock.length) { toast('已经没有剩余发牌'); return; }
-    saveSnapshot(); state.dealFlash = true; for (let i=0;i<8 && state.stock.length;i++) { const card = state.stock.pop(); card.faceUp = true; state.columns[i].push(card); completeRuns(i); } state.moves++; state.selected=null; state.hint=null; render(); persist(); playDealSound(); setTimeout(() => { state.dealFlash = false; render(); }, 320); checkWin();
+    saveSnapshot(); state.dealFlash = false; const dealtColumns = [];
+    for (let i=0;i<8 && state.stock.length;i++) { const card = state.stock.pop(); card.faceUp = true; state.columns[i].push(card); completeRuns(i); dealtColumns.push(i); }
+    state.moves++; state.selected=null; state.hint=null; render();
+    dealtColumns.forEach((col, index) => { const cards = document.querySelectorAll('.column[data-col="' + col + '"] .card'); const card = cards[cards.length - 1]; if (!card) return; card.classList.add('stock-deal-card'); card.style.setProperty('--stock-delay', String(index * 72) + 'ms'); window.setTimeout(() => { card.classList.remove('stock-deal-card'); card.style.removeProperty('--stock-delay'); }, 520 + index * 72); });
+    persist(); playDealSound(); checkWin();
   }
   function selectRun(col, index) { if (isMovableRun(col,index)) { state.selected = {col,index}; state.hint=null; render(); } else toast('只能移动同花色的连续牌组'); }
   function clickCard(col, index) {
