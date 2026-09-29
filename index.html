@@ -572,10 +572,12 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const exposesHidden = move.index > 0 && source[move.index - 1] && !source[move.index - 1].faceUp;
     const createsEmpty = source.length === movingCount && target.length > 0;
     const singleCardToEmpty = target.length === 0 && movingCount === 1;
+    const joinsSequence = target.length > 0 && target[target.length - 1].faceUp && source[move.index]?.rank + 1 === target[target.length - 1].rank;
     if (sim.completedDelta > 0) return 400 + sim.completedDelta * 200;
     if (exposesHidden) return 220;
     if (createsEmpty) return 170;
     if (singleCardToEmpty) return 80;
+    if (joinsSequence && movingCount === 1) return 45;
     return 0;
   }
   function bestHintContinuation(columns, completed, previous) {
