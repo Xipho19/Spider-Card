@@ -329,7 +329,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   const SUITS = ['♠','♥','♦','♣'];
   const SUIT_ASSET = {'♣':'clubs','♦':'diamonds','♥':'hearts','♠':'spades'};
   const RED = new Set(['♥','♦']);
-  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false };
+  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false };
   const $ = (s) => document.querySelector(s);
   const board = $('#board');
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
@@ -440,7 +440,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     }, flyEnd + 40);
   }
   function newGame(mode = state.mode, seed = makeSeed(), challenge = state.challengeMode) {
-    state.mode = mode; state.challengeMode = challenge === true; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
+    state.mode = mode; state.challengeMode = challenge === true; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.lastHintMove = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
     let deal = null; let chosenSeed = seed >>> 0;
     for (let attempt = 0; attempt < 32; attempt++) {
       chosenSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
@@ -471,7 +471,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   }
   function move(fromCol, fromIndex, toCol) {
     if (!canMove(fromCol, fromIndex, toCol)) return false;
-    saveSnapshot(); const src = state.columns[fromCol]; const moved = src.splice(fromIndex); if (src.length && !src[src.length-1].faceUp) src[src.length-1].faceUp = true; state.columns[toCol].push(...moved); state.moves++; completeRuns(toCol); state.selected = null; state.hint = null; state.dealFlash = false; render(); persist(); playMoveSound(); checkWin(); return true;
+    saveSnapshot(); const movingId = state.columns[fromCol][fromIndex]?.id; const wasHintMove = state.lastHintMove && state.lastHintMove.from === fromCol && state.lastHintMove.to === toCol && state.lastHintMove.cardId === movingId; const src = state.columns[fromCol]; const moved = src.splice(fromIndex); if (src.length && !src[src.length-1].faceUp) src[src.length-1].faceUp = true; state.columns[toCol].push(...moved); state.moves++; completeRuns(toCol); state.selected = null; state.hint = null; if (!wasHintMove) state.lastHintMove = null; state.dealFlash = false; render(); persist(); playMoveSound(); checkWin(); return true;
   }
   function dealStock() {
     if (!state.stock.length) { toast('已经没有剩余发牌'); return; }
@@ -581,18 +581,26 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   function findHint() {
     const base = hintBoardValue(state.columns, state.completed); const candidates = [];
     for (const move of enumerateHintMoves(state.columns)) {
+      const moving = state.columns[move.from][move.index];
+      const previous = state.lastHintMove;
+      if (previous && previous.from === move.to && previous.to === move.from && moving?.id === previous.cardId) continue;
       const sim = simulateHintMove(state.columns, state.completed, move.from, move.index, move.to);
       const impact = hintMoveImpact(state.columns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
       const future = bestHintContinuation(sim.columns, sim.completed, move);
       const score = impact + Math.max(0, delta) * .35 + future * .65;
-      if (impact > 0 || future >= 80 || delta > 0) candidates.push({...move, score});
+      const source = state.columns[move.from]; const target = state.columns[move.to]; const movingCount = source.length - move.index;
+      const exposesHidden = move.index > 0 && source[move.index - 1] && !source[move.index - 1].faceUp;
+      const createsEmpty = source.length === movingCount && target.length > 0;
+      const singleCardToEmpty = target.length === 0 && movingCount === 1;
+      const directProgress = sim.completedDelta > 0 || exposesHidden || createsEmpty || singleCardToEmpty;
+      if (directProgress) candidates.push({...move, score});
     }
     if (candidates.length) { candidates.sort((a,b) => b.score - a.score); return candidates[0]; }
     if (state.stock.length) return {stock:true};
     return null;
   }
-  function showHint() { const h = findHint(); state.hint = h; render(); if (!h) toast('当前没有可推进的移动'); else if (h.stock) toast('暂时没有可推进的移动，发下一轮牌'); else toast(`试试把第 ${h.from+1} 列移动到第 ${h.to+1} 列`); }
+  function showHint() { const h = findHint(); state.hint = h; if (h && !h.stock) { h.cardId = state.columns[h.from][h.index]?.id; state.lastHintMove = h; } else if (h?.stock || !h) state.lastHintMove = null; render(); if (!h) toast('当前没有能带来进展的移动'); else if (h.stock) toast('当前没有能带来进展的移动，发下一轮牌'); else toast(`试试把第 ${h.from+1} 列移动到第 ${h.to+1} 列`); }
   function undo() { const prev = state.history.pop(); if (!prev) { toast('还没有可撤回的操作'); return; } restoreSnapshot(prev); playMoveSound(); }
   function checkWin() {
     if (state.completed < 6) return;
