@@ -202,6 +202,7 @@ html, body { height:100%; overflow:hidden; }
 .brand h1 { white-space:nowrap; font-size:14px; letter-spacing:.04em; }
 .top-actions { min-width:0; flex-wrap:nowrap; gap:4px; }
 .top-actions .ghost, .top-actions .primary { white-space:nowrap; padding:6px 7px; border-radius:9px; font-size:11px; line-height:1.2; flex:0 0 auto; }
+.seed-value { font-size:clamp(11px, 2.3vw, 15px)!important; letter-spacing:0!important; overflow:hidden; text-overflow:ellipsis; }
 /* Home screen visual refresh */
 .start-overlay { background:rgba(2,12,12,.72); backdrop-filter:blur(12px); }
 .start-modal { position:relative; isolation:isolate; width:min(430px,100vw); min-height:100dvh; height:100dvh; justify-content:flex-start; overflow:hidden; padding:54px 24px 28px; background:linear-gradient(180deg, rgba(8,31,29,.74), rgba(6,22,23,.94)); }
@@ -314,6 +315,8 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   .start-modal { width:100%; max-width:none; min-height:100dvh; height:100dvh; margin:0; border:0; border-radius:0; box-shadow:none; padding-left:max(18px, env(safe-area-inset-left)); padding-right:max(18px, env(safe-area-inset-right)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
   .top-actions .ghost { display:block; }
   .top-actions #soundBtn { display:block; }
+  .top-actions { gap:2px; }
+  .top-actions .ghost, .top-actions .primary { padding-left:4px; padding-right:4px; font-size:10px; }
 }
 
 
@@ -325,11 +328,11 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
 <div class="app">
   <header class="topbar">
     <div class="brand"><div class="brand-mark">♠</div><div><h1>蜘蛛纸牌</h1><p>Spider Solitaire · 清爽桌面版</p></div></div>
-    <div class="top-actions"><button class="ghost home-btn" id="homeBtn">⌂ 返回</button><button class="ghost" id="undoBtn">↶ 撤回</button><button class="ghost" id="hintBtn">✦ 提示</button><button class="ghost" id="soundBtn">♫ 声音</button><button class="primary" id="newBtn">新牌局</button></div>
+    <div class="top-actions"><button class="ghost home-btn" id="homeBtn">⌂ 返回</button><button class="ghost" id="undoBtn">↶ 撤回</button><button class="ghost" id="hintBtn">✦ 提示</button><button class="ghost" id="soundBtn">♫ 声音</button><button class="ghost" id="replayBtn">↻ 复盘</button><button class="primary" id="newBtn">新牌局</button></div>
   </header>
   <main class="shell">
     <section class="hud">
-      <div class="stats"><div class="stat"><small>时间</small><strong id="time">00:00</strong></div><div class="stat"><small>步数</small><strong id="moves">0</strong></div><div class="stat"><small>已完成</small><strong id="completed">0 / 5</strong></div><div class="stat"><small>牌局</small><strong id="seedLabel">—</strong></div></div>
+      <div class="stats"><div class="stat"><small>时间</small><strong id="time">00:00</strong></div><div class="stat"><small>步数</small><strong id="moves">0</strong></div><div class="stat"><small>已完成</small><strong id="completed">0 / 5</strong></div><div class="stat"><small>牌局</small><strong id="seedLabel" class="seed-value">—</strong></div></div>
     </section>
     <section class="bottom-row deal-row">
       <div class="stock-area"><button id="stock" class="stock" aria-label="发牌"><span id="stockCount">5</span></button><div><div class="stock-label">剩余发牌轮数</div><div id="statusText" class="stock-label">选择一组同花色连续牌开始移动</div></div></div>
@@ -487,6 +490,14 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       window.setTimeout(searchNext, 0);
     }
     window.setTimeout(searchNext, 0);
+  }
+  function replayGame(seed) {
+    const replaySeed = Number(seed);
+    if (!Number.isSafeInteger(replaySeed) || replaySeed < 0 || replaySeed > 0xFFFFFFFF) { toast('请输入有效的完整牌局种子'); return; }
+    const candidate = buildDeal(makeDeck(state.mode, replaySeed));
+    state.generationToken++;
+    state.seed = replaySeed; state.columns = candidate.columns; state.stock = candidate.stock; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.lastHintMove = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.challengeLimit = state.challengeMode ? challengeTimeForMode(state.mode) : 0;
+    $('#overlay').classList.remove('open'); $('#startOverlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist();
   }
   function isMovableRun(col, index) {
     const cards = state.columns[col]; if (!cards[index]?.faceUp) return false;
@@ -764,7 +775,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       column.addEventListener('dragover', e => { e.preventDefault(); column.classList.add('drop-target'); }); column.addEventListener('dragleave', () => column.classList.remove('drop-target')); column.addEventListener('drop', e => { e.preventDefault(); column.classList.remove('drop-target'); const d = e.dataTransfer.getData('text/plain').split(',').map(Number); if (!move(d[0],d[1],ci)) toast('这组牌不能放到此列'); });
       col.forEach((card, idx) => { const el = document.createElement('div'); el.className = 'card ' + (card.faceUp ? 'face-up ' + (RED.has(card.suit)?'red':'black') : 'face-down') + (state.dealFlash && card.faceUp ? ' deal-in' : ''); el.dataset.col=ci; el.dataset.index=idx; if (state.selected && state.selected.col===ci && idx>=state.selected.index) el.classList.add('selected'); if (state.hint && !state.hint.stock && ((state.hint.from===ci && idx===state.hint.index) || (state.hint.to===ci && idx===col.length-1))) el.classList.add('hint'); el.draggable = false;
         if (card.faceUp) { el.setAttribute('aria-label', `${rankName(card.rank)}${card.suit}`); el.innerHTML = `<img class="card-art" src="${cardAsset(card)}" alt="${rankName(card.rank)}${card.suit}" draggable="false" loading="eager" decoding="sync" fetchpriority="high">`; el.addEventListener('click', e => { e.stopPropagation(); clickCard(ci,idx); }); el.addEventListener('pointerdown', e => beginPointerDrag(e, ci, idx, el)); } column.appendChild(el); }); board.appendChild(column); });
-    $('#stockCount').textContent = Math.ceil(state.stock.length / 8); $('#stock').classList.toggle('empty', !state.stock.length); $('#stock').classList.toggle('hint-stock', Boolean(state.hint && state.hint.stock)); $('#moves').textContent = state.moves; $('#completed').textContent = `${state.completed} / 5`; $('#seedLabel').textContent = String(state.seed).slice(-6); const remaining = state.challengeMode ? challengeRemaining() : elapsed(); $('#time').textContent = fmtTime(remaining); $('#time').classList.toggle('countdown-warning', state.challengeMode && remaining <= 30); $('#undoBtn').disabled = !state.history.length; $('#undoBtn').style.opacity = state.history.length ? '1' : '.45'; updateSoundButton();
+    $('#stockCount').textContent = Math.ceil(state.stock.length / 8); $('#stock').classList.toggle('empty', !state.stock.length); $('#stock').classList.toggle('hint-stock', Boolean(state.hint && state.hint.stock)); $('#moves').textContent = state.moves; $('#completed').textContent = `${state.completed} / 5`; $('#seedLabel').textContent = state.seed ? String(state.seed) : '—'; const remaining = state.challengeMode ? challengeRemaining() : elapsed(); $('#time').textContent = fmtTime(remaining); $('#time').classList.toggle('countdown-warning', state.challengeMode && remaining <= 30); $('#undoBtn').disabled = !state.history.length; $('#undoBtn').style.opacity = state.history.length ? '1' : '.45'; updateSoundButton();
     document.querySelectorAll('.mode-tab').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.mode)===state.mode));
     scheduleBoardFit();
   }
@@ -826,7 +837,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     $('#continueGameBtn').hidden = !state.columns.length;
     $('#startOverlay').classList.add('open');
   }
-  $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), state.challengeMode)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), state.challengeMode)); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
+  $('#newBtn').addEventListener('click', () => newGame(state.mode, makeSeed(), state.challengeMode)); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), state.challengeMode)); $('#replayBtn').addEventListener('click', () => { const seed = window.prompt('请输入要复盘的完整牌局种子', state.seed ? String(state.seed) : ''); if (seed !== null) replayGame(seed.trim()); }); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', undo); $('#hintBtn').addEventListener('click', showHint); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
   $('#homeHelpBtn')?.addEventListener('click', () => { $('#startOverlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#helpOverlay').classList.add('open'); }); $('#closeHelp')?.addEventListener('click', () => { $('#helpOverlay').classList.remove('open'); $('#startOverlay').classList.add('open'); }); $('#modeCancel')?.addEventListener('click', () => { $('#modeOverlay').classList.remove('open'); $('#startOverlay').classList.add('open'); });
   if (typeof window !== 'undefined') { window.addEventListener('resize', scheduleBoardFit); window.addEventListener('orientationchange', scheduleBoardFit); }
   state.timer = setInterval(() => { if (!state.startedAt) return; if (checkChallengeTimeout()) return; const remaining = state.challengeMode ? challengeRemaining() : elapsed(); $('#time').textContent = fmtTime(remaining); $('#time').classList.toggle('countdown-warning', state.challengeMode && remaining <= 30); }, 1000);
