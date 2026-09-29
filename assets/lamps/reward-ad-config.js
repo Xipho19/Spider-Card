@@ -5,6 +5,7 @@
 window.LAMPS_CONFIG = window.LAMPS_CONFIG || {
   gameId: "",
   workSessionId: "50672c14-7b90-4699-bbed-9d6b033b065a",
+  leaderboardApiUrl: "",
 };
 if (window.LAMPS_CONFIG.workSessionId == null) {
   window.LAMPS_CONFIG.workSessionId = "";

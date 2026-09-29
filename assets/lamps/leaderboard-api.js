@@ -1,8 +1,11 @@
 (function (global) {
   "use strict";
 
-  // Set this to the deployed HTTPS API URL. Empty keeps the local fallback active.
-  var API_URL = String(global.LAMPS_LEADERBOARD_API_URL || "").trim().replace(/\/$/, "");
+  function apiUrl() {
+    var config = global.LAMPS_CONFIG || {};
+    var value = String(global.LAMPS_LEADERBOARD_API_URL || config.leaderboardApiUrl || "").trim().replace(/\/$/, "");
+    return /^https?:\/\//i.test(value) ? value : "";
+  }
   var pending = Object.create(null);
   var sequence = 0;
 
@@ -79,11 +82,13 @@
   }
 
   function submitScore(mode, seconds, player) {
+    var API_URL = apiUrl();
     if (!API_URL) return Promise.resolve(false);
     return request({url:API_URL + "/scores", method:"post", data:{mode:Number(mode), time:Math.max(1, Number(seconds)), player:String(player || "匿名玩家")}, header:{"Content-Type":"application/json"}}).then(parseResult).then(function () { return true; }).catch(function () { return false; });
   }
 
   function fetchScores(mode) {
+    var API_URL = apiUrl();
     if (!API_URL) return Promise.resolve(null);
     return request({url:API_URL + "/scores", method:"get", data:{mode:Number(mode)}, header:{"Content-Type":"application/json"}}).then(parseResult).then(function (body) { return Array.isArray(body.scores) ? body.scores : []; }).catch(function () { return null; });
   }
