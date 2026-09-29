@@ -433,7 +433,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   }
   function buildDeal(deck) {
     const columns = Array.from({length:8}, () => []); let cursor = 0;
-    for (let col=0; col<8; col++) { const count = col < 6 ? 6 : 5; for (let i=0;i<count;i++) columns[col].push(deck[cursor++]); }
+    for (let col=0; col<8; col++) { const count = 5; for (let i=0;i<count;i++) columns[col].push(deck[cursor++]); }
     for (const col of columns) col[col.length-1].faceUp = true;
     return { columns, stock: deck.slice(cursor) };
   }
