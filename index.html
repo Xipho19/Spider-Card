@@ -307,6 +307,13 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
 .start-modal { width:100%; max-width:100%; margin-inline:auto; }
 @media (min-width:621px) { body { min-width:0; } .app { width:min(430px,100%); margin-inline:auto; } }
 
+@media (max-width:620px) {
+  body { display:block; }
+  .app { width:100%; max-width:none; margin:0; }
+  .start-overlay { padding:0; place-items:stretch; }
+  .start-modal { width:100%; max-width:none; min-height:100dvh; height:100dvh; margin:0; border:0; border-radius:0; box-shadow:none; padding-left:max(18px, env(safe-area-inset-left)); padding-right:max(18px, env(safe-area-inset-right)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
+}
+
 
 /* Help is a standalone page opened from the home screen. */
 #helpOverlay { z-index:70; }
