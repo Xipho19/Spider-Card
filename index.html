@@ -594,9 +594,9 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     if (formsLongRun) return 35;
     return 0;
   }
-  function isEquivalentSingleReparent(columns, move) {
+  function isEquivalentReparent(columns, move) {
     const source = columns[move.from]; const target = columns[move.to];
-    if (source.length - move.index !== 1 || move.index === 0 || !target.length) return false;
+    if (move.index === 0 || !target.length) return false;
     const sourceParent = source[move.index - 1]; const targetParent = target[target.length - 1];
     return sourceParent.faceUp && targetParent.faceUp && sourceParent.rank === targetParent.rank && sourceParent.suit === targetParent.suit;
   }
@@ -604,7 +604,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const base = hintBoardValue(columns, completed); let best = 0;
     for (const move of enumerateHintMoves(columns)) {
       if (previous && move.from === previous.to && move.to === previous.from) continue;
-      if (isEquivalentSingleReparent(columns, move)) continue;
+      if (isEquivalentReparent(columns, move)) continue;
       const sim = simulateHintMove(columns, completed, move.from, move.index, move.to);
       const progress = hintDirectProgress(columns, move, sim);
       const nested = depth > 0 ? bestHintContinuation(sim.columns, sim.completed, move, depth - 1) : 0;
@@ -621,7 +621,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       const moving = state.columns[move.from][move.index];
       const previous = state.lastHintMove;
       if (previous && previous.from === move.to && previous.to === move.from && moving?.id === previous.cardId) continue;
-      if (isEquivalentSingleReparent(state.columns, move)) continue;
+      if (isEquivalentReparent(state.columns, move)) continue;
       const sim = simulateHintMove(state.columns, state.completed, move.from, move.index, move.to);
       const impact = hintMoveImpact(state.columns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
