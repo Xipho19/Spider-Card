@@ -373,6 +373,9 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
 <div id="helpOverlay" class="overlay"><div class="modal help-modal"><div class="emoji">♠</div><h2>玩法说明</h2><p class="help-lead">把所有牌按同一花色从 K 到 A 排成完整序列</p><ul class="help-list"><li><b>1</b><div><strong>移动牌组</strong><span>点击一张已翻开的牌选择整组，再点击目标列；也可以直接拖动。</span></div></li><li><b>2</b><div><strong>叠放规则</strong><span>只能把牌放到比它大 1 点的牌下面，例如 5 可以放到 6 下面。</span></div></li><li><b>3</b><div><strong>发新牌</strong><span>点击底部发牌区，每一列获得 1 张新牌。空列也可以继续发牌。</span></div></li><li><b>4</b><div><strong>撤回与提示</strong><span>撤回可以恢复上一步；提示会优先寻找能翻开暗牌或整理同花色牌组的有效移动。</span></div></li><li><b>5</b><div><strong>完成牌组</strong><span>同一花色从 K、Q、J 一直到 A 连成完整 13 张后会自动收进完成区。</span></div></li><li><b>∞</b><div><strong>限时挑战</strong><span>每种花色独立计时。开始时由玩家设定本局时间，提前通关后会用本局用时作为该花色下一局的倒计时；倒计时结束则挑战失败。</span></div></li></ul><button class="primary help-close" id="closeHelp">知道了</button></div></div>
 <div id="dealLoading" class="overlay deal-loading"><div class="modal"><div class="emoji">♠</div><h2>正在生成牌局</h2></div></div>
 <div id="toast" class="toast"></div>
+<script src="assets/lamps/reward-ad-config.js"></script>
+<script src="assets/lamps/reward-ad-bridge.js"></script>
+<script src="assets/lamps/reward-ad-platform.js"></script>
 <script>
 (() => {
   const SUITS = ['♠','♥','♦','♣'];
@@ -460,11 +463,13 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   function ensureDailyItems() { const today = todayKey(); if (state.itemDate !== today) { state.itemDate = today; state.itemCounts = {undo:3, hint:3}; persist(); } }
   function updateItemCounts() { ensureDailyItems(); const undo = $('#undoCount'); const hint = $('#hintCount'); if (undo) undo.textContent = `×${state.itemCounts.undo}`; if (hint) hint.textContent = `×${state.itemCounts.hint}`; }
   function showRewardedAd(onReward, onCancel) {
-    const provider = window.SpiderAds?.showRewardedAd || window.showRewardedAd;
+    const provider = window.LampsPlatform?.showRewardedVideo;
     if (typeof provider !== 'function') { toast('广告接口尚未配置'); if (onCancel) onCancel(); return; }
-    let rewarded = false;
-    const reward = () => { if (rewarded) return; rewarded = true; onReward(); };
-    try { provider(reward, () => { toast('广告未完成，暂未获得道具'); if (onCancel) onCancel(); }); } catch (_) { toast('广告加载失败，请稍后再试'); if (onCancel) onCancel(); }
+    Promise.resolve().then(() => provider({source:'item_reward'})).then(result => {
+      if (result && result.ok === true) { onReward(); return; }
+      toast(result?.message || '广告未完成，暂未获得道具');
+      if (onCancel) onCancel();
+    }).catch(() => { toast('广告加载失败，请稍后再试'); if (onCancel) onCancel(); });
   }
   let pendingReward = null;
   function pauseForReward() { if (!state.rewardPaused && state.startedAt) { state.elapsedBefore = elapsed(); state.startedAt = 0; state.rewardPaused = true; render(); persist(); } }
