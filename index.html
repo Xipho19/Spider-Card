@@ -641,34 +641,50 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const sourceParent = source[move.index - 1]; const targetParent = target[target.length - 1];
     return sourceParent.faceUp && targetParent.faceUp && sourceParent.rank === targetParent.rank && sourceParent.suit === targetParent.suit;
   }
-  function bestHintContinuation(columns, completed, previous, depth = 2) {
+  function createHintSearchContext(maxMs = 160) { return { deadline:Date.now() + maxMs, nodes:0, maxNodes:1800, memo:new Map(), timedOut:false }; }
+  function hintSearchAvailable(context) {
+    if (++context.nodes > context.maxNodes || Date.now() >= context.deadline) { context.timedOut = true; return false; }
+    return true;
+  }
+  function bestHintContinuation(columns, completed, previous, depth = 2, context = null) {
+    context = context || createHintSearchContext();
+    if (!hintSearchAvailable(context)) return 0;
+    const previousKey = previous ? `${previous.from},${previous.to},${previous.index}` : '-';
+    const key = `${depth}|${completed}|${previousKey}|${solverStateKey(columns, [], completed)}`;
+    if (context.memo.has(key)) return context.memo.get(key);
     const base = hintBoardValue(columns, completed); let best = 0;
-    for (const move of enumerateHintMoves(columns)) {
-      if (previous && move.from === previous.to && move.to === previous.from) continue;
-      if (isEquivalentReparent(columns, move)) continue;
+    const moves = enumerateHintMoves(columns).filter(move => !(previous && move.from === previous.to && move.to === previous.from) && !isEquivalentReparent(columns, move)).map(move => {
       const sim = simulateHintMove(columns, completed, move.from, move.index, move.to);
+      return {move, sim, priority:hintDirectProgress(columns, move, sim) + hintMoveImpact(columns, sim.columns, move.from, move.index, move.to, sim.completedDelta)};
+    }).sort((a,b) => b.priority - a.priority).slice(0, 12);
+    for (const item of moves) {
+      if (!hintSearchAvailable(context)) break;
+      const {move, sim} = item;
       const progress = hintDirectProgress(columns, move, sim);
-      const nested = depth > 0 ? bestHintContinuation(sim.columns, sim.completed, move, depth - 1) : 0;
+      const nested = depth > 0 ? bestHintContinuation(sim.columns, sim.completed, move, depth - 1, context) : 0;
       if (!progress && !nested) continue;
       const impact = hintMoveImpact(columns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
       best = Math.max(best, progress + nested * .7 + impact + Math.max(0, delta) * .35);
     }
+    context.memo.set(key, best);
     return best;
   }
   function findHint() {
-    const base = hintBoardValue(state.columns, state.completed); const candidates = [];
-    for (const move of enumerateHintMoves(state.columns)) {
-      const moving = state.columns[move.from][move.index];
-      const previous = state.lastHintMove;
-      if (previous && previous.from === move.to && previous.to === move.from && moving?.id === previous.cardId) continue;
-      if (isEquivalentReparent(state.columns, move)) continue;
+    const context = createHintSearchContext(); const base = hintBoardValue(state.columns, state.completed); const candidates = [];
+    const rootMoves = enumerateHintMoves(state.columns).map(move => {
+      const moving = state.columns[move.from][move.index]; const previous = state.lastHintMove;
+      if ((previous && previous.from === move.to && previous.to === move.from && moving?.id === previous.cardId) || isEquivalentReparent(state.columns, move)) return null;
       const sim = simulateHintMove(state.columns, state.completed, move.from, move.index, move.to);
+      return {move, sim, directProgress:hintDirectProgress(state.columns, move, sim), priority:hintDirectProgress(state.columns, move, sim) + hintMoveImpact(state.columns, sim.columns, move.from, move.index, move.to, sim.completedDelta)};
+    }).filter(Boolean).sort((a,b) => b.priority - a.priority).slice(0, 24);
+    for (const item of rootMoves) {
+      if (!hintSearchAvailable(context)) break;
+      const {move, sim, directProgress} = item;
       const impact = hintMoveImpact(state.columns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
-      const future = bestHintContinuation(sim.columns, sim.completed, move);
+      const future = bestHintContinuation(sim.columns, sim.completed, move, 2, context);
       const score = impact + Math.max(0, delta) * .35 + future * .65;
-      const directProgress = hintDirectProgress(state.columns, move, sim);
       if (directProgress || future > 0) candidates.push({...move, score: score + directProgress});
     }
     if (candidates.length) { candidates.sort((a,b) => b.score - a.score); return candidates[0]; }
