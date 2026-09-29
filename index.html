@@ -573,23 +573,28 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const createsEmpty = source.length === movingCount && target.length > 0;
     const singleCardToEmpty = target.length === 0 && movingCount === 1;
     const joinsSequence = target.length > 0 && target[target.length - 1].faceUp && source[move.index]?.rank + 1 === target[target.length - 1].rank;
+    const destination = sim.columns[move.to]; let joinedRunLength = destination.length ? 1 : 0;
+    for (let i = destination.length - 1; i > 0 && destination[i - 1].faceUp && destination[i].faceUp && destination[i - 1].suit === destination[i].suit && destination[i - 1].rank === destination[i].rank + 1; i--) joinedRunLength++;
+    const formsLongRun = joinsSequence && movingCount > 1 && joinedRunLength >= 4;
     if (sim.completedDelta > 0) return 400 + sim.completedDelta * 200;
     if (exposesHidden) return 220;
     if (createsEmpty) return 170;
     if (singleCardToEmpty) return 80;
     if (joinsSequence && movingCount === 1) return 45;
+    if (formsLongRun) return 35;
     return 0;
   }
-  function bestHintContinuation(columns, completed, previous) {
+  function bestHintContinuation(columns, completed, previous, depth = 2) {
     const base = hintBoardValue(columns, completed); let best = 0;
     for (const move of enumerateHintMoves(columns)) {
       if (previous && move.from === previous.to && move.to === previous.from) continue;
       const sim = simulateHintMove(columns, completed, move.from, move.index, move.to);
       const progress = hintDirectProgress(columns, move, sim);
-      if (!progress) continue;
+      const nested = depth > 0 ? bestHintContinuation(sim.columns, sim.completed, move, depth - 1) : 0;
+      if (!progress && !nested) continue;
       const impact = hintMoveImpact(columns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
-      best = Math.max(best, progress + impact + Math.max(0, delta) * .35);
+      best = Math.max(best, progress + nested * .7 + impact + Math.max(0, delta) * .35);
     }
     return best;
   }
