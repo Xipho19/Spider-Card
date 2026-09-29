@@ -447,23 +447,24 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   }
   function newGame(mode = state.mode, seed = makeSeed(), challenge = state.challengeMode) {
     state.mode = mode; state.challengeMode = challenge === true; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.lastHintMove = null; state.elapsedBefore = 0; state.startedAt = 0; state.dealFlash = false; state.dealGenerating = true;
-    const token = ++state.generationToken; let attempt = 0; let chosenSeed = seed >>> 0; const generationStarted = Date.now(); let fallback = null;
+    const token = ++state.generationToken; let attempt = 0; let chosenSeed = seed >>> 0; const generationStarted = Date.now(); let fallback = null; let robustAttempts = 0;
     $('#overlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#startOverlay').classList.remove('open'); $('#dealLoading').classList.add('open');
     function startCandidate(candidate, candidateSeed) {
       state.seed = candidateSeed; state.columns = candidate.columns; state.stock = candidate.stock; state.dealGenerating = false; state.startedAt = Date.now(); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist(); updateSoundButton();
     }
     function searchNext() {
       if (token !== state.generationToken) return;
+      if (fallback && Date.now() - generationStarted >= 5000) { $('#dealLoadingText').textContent = '牌局验证超时，已使用当前可玩的候选牌局…'; startCandidate(fallback.candidate, fallback.seed); return; }
       chosenSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
       const candidate = buildDeal(makeDeck(state.mode, chosenSeed));
       attempt++;
       const hasOpening = dealHasOpeningMove(candidate.columns);
-      const baseSolvable = hasOpening && solveDeal(candidate.columns, candidate.stock, 0);
+      if (hasOpening && !fallback) fallback = {candidate, seed:chosenSeed};
+      const baseSolvable = hasOpening && solveDeal(candidate.columns, candidate.stock, 0, {maxNodes:30000, maxMs:180});
       if (baseSolvable) {
         if (!fallback) fallback = {candidate, seed:chosenSeed};
-        if (assessDealRobustness(candidate.columns, candidate.stock)) { startCandidate(candidate, chosenSeed); return; }
+        if (robustAttempts < 6) { robustAttempts++; if (assessDealRobustness(candidate.columns, candidate.stock)) { startCandidate(candidate, chosenSeed); return; } }
       }
-      if (fallback && Date.now() - generationStarted >= 8000) { $('#dealLoadingText').textContent = '稳健牌局筛选超时，已切换到可通关牌局…'; startCandidate(fallback.candidate, fallback.seed); return; }
       if (attempt % 4 === 0) $('#dealLoadingText').textContent = `已验证 ${attempt} 个候选牌局，正在筛选多分支稳健牌局…`;
       window.setTimeout(searchNext, 0);
     }
