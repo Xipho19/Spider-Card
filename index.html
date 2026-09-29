@@ -567,14 +567,27 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const joinedRunBonus = joinsSequence ? Math.min(70, 18 + sourceRunLength * 7 + Math.min(targetRunLength, 5) * 3) : 0;
     return (completedDelta * 180) + (exposesHidden ? 120 : 0) + (emptyCreated || opensUsefulColumn ? 75 : 0) + joinedRunBonus + (singleCardToEmpty ? 35 : 0);
   }
+  function hintDirectProgress(columns, move, sim) {
+    const source = columns[move.from]; const target = columns[move.to]; const movingCount = source.length - move.index;
+    const exposesHidden = move.index > 0 && source[move.index - 1] && !source[move.index - 1].faceUp;
+    const createsEmpty = source.length === movingCount && target.length > 0;
+    const singleCardToEmpty = target.length === 0 && movingCount === 1;
+    if (sim.completedDelta > 0) return 400 + sim.completedDelta * 200;
+    if (exposesHidden) return 220;
+    if (createsEmpty) return 170;
+    if (singleCardToEmpty) return 80;
+    return 0;
+  }
   function bestHintContinuation(columns, completed, previous) {
     const base = hintBoardValue(columns, completed); let best = 0;
     for (const move of enumerateHintMoves(columns)) {
       if (previous && move.from === previous.to && move.to === previous.from) continue;
       const sim = simulateHintMove(columns, completed, move.from, move.index, move.to);
+      const progress = hintDirectProgress(columns, move, sim);
+      if (!progress) continue;
       const impact = hintMoveImpact(columns, sim.columns, move.from, move.index, move.to, sim.completedDelta);
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
-      best = Math.max(best, impact + Math.max(0, delta) * .35);
+      best = Math.max(best, progress + impact + Math.max(0, delta) * .35);
     }
     return best;
   }
@@ -589,12 +602,8 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       const delta = hintBoardValue(sim.columns, sim.completed) - base;
       const future = bestHintContinuation(sim.columns, sim.completed, move);
       const score = impact + Math.max(0, delta) * .35 + future * .65;
-      const source = state.columns[move.from]; const target = state.columns[move.to]; const movingCount = source.length - move.index;
-      const exposesHidden = move.index > 0 && source[move.index - 1] && !source[move.index - 1].faceUp;
-      const createsEmpty = source.length === movingCount && target.length > 0;
-      const singleCardToEmpty = target.length === 0 && movingCount === 1;
-      const directProgress = sim.completedDelta > 0 || exposesHidden || createsEmpty || singleCardToEmpty;
-      if (directProgress) candidates.push({...move, score});
+      const directProgress = hintDirectProgress(state.columns, move, sim);
+      if (directProgress || future > 0) candidates.push({...move, score: score + directProgress});
     }
     if (candidates.length) { candidates.sort((a,b) => b.score - a.score); return candidates[0]; }
     if (state.stock.length) return {stock:true};
