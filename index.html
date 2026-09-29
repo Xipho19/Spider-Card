@@ -368,7 +368,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   const SUITS = ['♠','♥','♦','♣'];
   const SUIT_ASSET = {'♣':'clubs','♦':'diamonds','♥':'hearts','♠':'spades'};
   const RED = new Set(['♥','♦']);
-  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false, challengeTimes: {}, challengeBestTimes: {}, challengeLimit: 0, itemDate: '', itemCounts: {undo:3, hint:3}, dealGenerating: false, generationToken: 0 };
+  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false, challengeTimes: {}, challengeBestTimes: {}, challengeLimit: 0, itemDate: '', itemCounts: {undo:3, hint:3}, rewardPaused: false, dealGenerating: false, generationToken: 0 };
   const $ = (s) => document.querySelector(s);
   const board = $('#board');
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
@@ -447,19 +447,21 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   function todayKey() { const now = new Date(); return `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`; }
   function ensureDailyItems() { const today = todayKey(); if (state.itemDate !== today) { state.itemDate = today; state.itemCounts = {undo:3, hint:3}; persist(); } }
   function updateItemCounts() { ensureDailyItems(); const undo = $('#undoCount'); const hint = $('#hintCount'); if (undo) undo.textContent = `×${state.itemCounts.undo}`; if (hint) hint.textContent = `×${state.itemCounts.hint}`; }
-  function showRewardedAd(onReward) {
+  function showRewardedAd(onReward, onCancel) {
     const provider = window.SpiderAds?.showRewardedAd || window.showRewardedAd;
-    if (typeof provider !== 'function') { toast('广告接口尚未配置'); return; }
+    if (typeof provider !== 'function') { toast('广告接口尚未配置'); if (onCancel) onCancel(); return; }
     let rewarded = false;
     const reward = () => { if (rewarded) return; rewarded = true; onReward(); };
-    try { provider(reward, () => toast('广告未完成，暂未获得道具')); } catch (_) { toast('广告加载失败，请稍后再试'); }
+    try { provider(reward, () => { toast('广告未完成，暂未获得道具'); if (onCancel) onCancel(); }); } catch (_) { toast('广告加载失败，请稍后再试'); if (onCancel) onCancel(); }
   }
   let pendingReward = null;
-  function openRewardPrompt(type, action) { pendingReward = {type, action}; $('#rewardOverlay').classList.add('open'); }
-  function closeRewardPrompt() { pendingReward = null; $('#rewardOverlay').classList.remove('open'); }
+  function pauseForReward() { if (!state.rewardPaused && state.startedAt) { state.elapsedBefore = elapsed(); state.startedAt = 0; state.rewardPaused = true; render(); persist(); } }
+  function resumeAfterReward() { if (state.rewardPaused) { state.startedAt = Date.now(); state.rewardPaused = false; render(); persist(); } }
+  function openRewardPrompt(type, action) { pauseForReward(); pendingReward = {type, action}; $('#rewardOverlay').classList.add('open'); }
+  function closeRewardPrompt() { pendingReward = null; $('#rewardOverlay').classList.remove('open'); resumeAfterReward(); }
   function confirmRewardAd() {
-    const pending = pendingReward; closeRewardPrompt(); if (!pending) return;
-    showRewardedAd(() => { state.itemCounts[pending.type] = 1; persist(); updateItemCounts(); toast('广告完成，已获得 1 次道具'); pending.action(); });
+    const pending = pendingReward; pendingReward = null; $('#rewardOverlay').classList.remove('open'); if (!pending) { resumeAfterReward(); return; }
+    showRewardedAd(() => { state.itemCounts[pending.type] = 1; persist(); updateItemCounts(); toast('广告完成，已获得 1 次道具'); pending.action(); resumeAfterReward(); }, resumeAfterReward);
   }
   function useItem(type, action) {
     ensureDailyItems();
