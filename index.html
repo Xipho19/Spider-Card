@@ -234,6 +234,7 @@ html, body { height:100%; overflow:hidden; }
 .home-challenge-btn { background:rgba(16,48,46,.82); border:1px solid rgba(158,208,182,.35); color:#eef5ed; box-shadow:0 10px 22px rgba(0,0,0,.2); }
 .countdown-warning { color:#ffd28c!important; }
 .home-challenge-btn .mode-icon { background:rgba(134,104,181,.38); color:#eadfff; }
+.challenge-best { margin:-4px 0 2px; text-align:center; color:rgba(234,243,234,.72); font-size:11px; line-height:1.45; }
 .home-footer { position:relative; z-index:1; width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; color:rgba(234,243,234,.62); font-size:11px; }
 .home-footer button { border:0; background:transparent; color:#e6c98e; padding:5px 0; cursor:pointer; font-size:11px; }
 .home-footer button:hover { color:#fff0c9; }
@@ -329,7 +330,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     <div class="footer-note"><span class="footer-dot"></span><span>本地离线运行 · 每局随机种子可复盘 · 原创桌面与牌背</span></div>
   </main>
 </div>
-<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="home-brand"><div class="brand-mark">♠</div><h2>蜘蛛纸牌</h2><p class="home-subtitle">SPIDER SOLITAIRE</p><p class="home-tagline">在蛛网与牌面之间，完成你的下一局挑战</p></div><div class="home-fan" aria-hidden="true"><div class="home-card"><img src="assets/cards/spades-A.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-J.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-Q.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-K.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-10.png" alt=""></div></div><div class="home-actions"><button id="startGameBtn" class="home-mode-btn home-classic-btn"><span><strong>经典模式</strong><small>单花色 · 双花色 · 四花色</small></span><span class="mode-icon">♠</span></button><button id="challengeGameBtn" class="home-mode-btn home-challenge-btn"><span><strong>限时挑战</strong><small>自行设定时间，通关后继续缩短</small></span><span class="mode-icon">∞</span></button><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button></div><div class="home-stats"><div class="home-stat"><strong>1—4</strong><span>花色难度</span></div><div class="home-stat"><strong>65</strong><span>总牌数</span></div><div class="home-stat"><strong>5</strong><span>完成牌组</span></div></div><div class="home-footer"><span>♣ 本地保存牌局进度</span><button type="button" id="homeHelpBtn">玩法说明&nbsp; ›</button></div></div></div>
+<div id="startOverlay" class="overlay start-overlay open"><div class="modal start-modal"><div class="home-brand"><div class="brand-mark">♠</div><h2>蜘蛛纸牌</h2><p class="home-subtitle">SPIDER SOLITAIRE</p><p class="home-tagline">在蛛网与牌面之间，完成你的下一局挑战</p></div><div class="home-fan" aria-hidden="true"><div class="home-card"><img src="assets/cards/spades-A.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-J.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-Q.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-K.png" alt=""></div><div class="home-card"><img src="assets/cards/spades-10.png" alt=""></div></div><div class="home-actions"><button id="startGameBtn" class="home-mode-btn home-classic-btn"><span><strong>经典模式</strong><small>单花色 · 双花色 · 四花色</small></span><span class="mode-icon">♠</span></button><button id="challengeGameBtn" class="home-mode-btn home-challenge-btn"><span><strong>限时挑战</strong><small>自行设定时间，通关后继续缩短</small></span><span class="mode-icon" aria-hidden="true">◷</span></button><div id="challengeBest" class="challenge-best">最短通关：单 --:-- · 双 --:-- · 四 --:--</div><button id="continueGameBtn" class="ghost start-button continue-button" hidden>继续上局</button></div><div class="home-stats"><div class="home-stat"><strong>1—4</strong><span>花色难度</span></div><div class="home-stat"><strong>65</strong><span>总牌数</span></div><div class="home-stat"><strong>5</strong><span>完成牌组</span></div></div><div class="home-footer"><span>♣ 本地保存牌局进度</span><button type="button" id="homeHelpBtn">玩法说明&nbsp; ›</button></div></div></div>
 <div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2 id="resultTitle">恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div>
 <div id="modeOverlay" class="overlay mode-overlay"><div class="modal mode-modal"><div class="emoji">♠</div><h2 id="modeChoiceTitle">选择花色</h2><p id="modeChoiceSubtitle">选择本局使用的花色数量</p><div id="challengeTimeSetting" class="challenge-time-setting" hidden><label for="challengeMinutes">本局倒计时（分钟）</label><input id="challengeMinutes" type="number" min="1" max="180" step="1" inputmode="numeric" placeholder="请输入分钟数"></div><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div><button id="modeCancel" class="ghost mode-cancel">返回</button></div></div>
 <div id="helpOverlay" class="overlay"><div class="modal help-modal"><div class="emoji">♠</div><h2>玩法说明</h2><p class="help-lead">把所有牌按同一花色从 K 到 A 排成完整序列</p><ul class="help-list"><li><b>1</b><div><strong>移动牌组</strong><span>点击一张已翻开的牌选择整组，再点击目标列；也可以直接拖动。</span></div></li><li><b>2</b><div><strong>叠放规则</strong><span>只能把牌放到比它大 1 点的牌下面，例如 5 可以放到 6 下面。</span></div></li><li><b>3</b><div><strong>发新牌</strong><span>点击底部发牌区，每一列获得 1 张新牌。空列也可以继续发牌。</span></div></li><li><b>4</b><div><strong>撤回与提示</strong><span>撤回可以恢复上一步；提示会优先寻找能翻开暗牌或整理同花色牌组的有效移动。</span></div></li><li><b>5</b><div><strong>完成牌组</strong><span>同一花色从 K、Q、J 一直到 A 连成完整 13 张后会自动收进完成区。</span></div></li><li><b>∞</b><div><strong>限时挑战</strong><span>每种花色独立计时。开始时由玩家设定本局时间，提前通关后会用本局用时作为该花色下一局的倒计时；倒计时结束则挑战失败。</span></div></li></ul><button class="primary help-close" id="closeHelp">知道了</button></div></div>
@@ -340,7 +341,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   const SUITS = ['♠','♥','♦','♣'];
   const SUIT_ASSET = {'♣':'clubs','♦':'diamonds','♥':'hearts','♠':'spades'};
   const RED = new Set(['♥','♦']);
-  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false, challengeTimes: {}, challengeLimit: 0, dealGenerating: false, generationToken: 0 };
+  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false, challengeTimes: {}, challengeBestTimes: {}, challengeLimit: 0, dealGenerating: false, generationToken: 0 };
   const $ = (s) => document.querySelector(s);
   const board = $('#board');
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
@@ -366,7 +367,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   function persist() {
     try {
       if (typeof localStorage === 'undefined') return;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ mode: state.mode, columns: state.columns, stock: state.stock, completed: state.completed, moves: state.moves, history: state.history, selected: null, seed: state.seed, elapsedBefore: elapsed(), soundEnabled: state.soundEnabled, challengeMode: state.challengeMode, challengeTimes: state.challengeTimes }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ mode: state.mode, columns: state.columns, stock: state.stock, completed: state.completed, moves: state.moves, history: state.history, selected: null, seed: state.seed, elapsedBefore: elapsed(), soundEnabled: state.soundEnabled, challengeMode: state.challengeMode, challengeTimes: state.challengeTimes, challengeBestTimes: state.challengeBestTimes }));
     } catch (_) {}
   }
   function restoreSavedGame() {
@@ -375,8 +376,8 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (!saved || !Array.isArray(saved.columns) || saved.columns.length !== 8 || !Array.isArray(saved.stock)) return false;
       state.mode = [1,2,4].includes(saved.mode) ? saved.mode : 1;
-      state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false; state.challengeMode = saved.challengeMode === true; state.challengeTimes = saved.challengeTimes && typeof saved.challengeTimes === 'object' ? saved.challengeTimes : {}; state.challengeLimit = state.challengeMode ? challengeTimeForMode(state.mode) : 0;
-      render(); checkWin(); updateSoundButton(); return true;
+      state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false; state.challengeMode = saved.challengeMode === true; state.challengeTimes = saved.challengeTimes && typeof saved.challengeTimes === 'object' ? saved.challengeTimes : {}; state.challengeBestTimes = saved.challengeBestTimes && typeof saved.challengeBestTimes === 'object' ? saved.challengeBestTimes : {}; state.challengeLimit = state.challengeMode ? challengeTimeForMode(state.mode) : 0;
+      render(); renderChallengeBest(); checkWin(); updateSoundButton(); return true;
     } catch (_) { return false; }
   }
   function ensureAudio() { if (!state.soundEnabled) return null; try { if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); if (audioContext.state === 'suspended') audioContext.resume(); return audioContext; } catch (_) { return null; } }
@@ -416,6 +417,8 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   function makeSeed() { return Math.floor(Math.random() * 0xFFFFFFFF); }
   function fmtTime(sec) { sec = Math.max(0, Math.floor(sec)); return String(Math.floor(sec / 60)).padStart(2,'0') + ':' + String(sec % 60).padStart(2,'0'); }
   function challengeTimeForMode(mode) { return Math.max(1, Number(state.challengeTimes[String(mode)]) || 300); }
+  function formatBestTime(mode) { const best = Number(state.challengeBestTimes[String(mode)]); return Number.isFinite(best) && best > 0 ? fmtTime(best) : '--:--'; }
+  function renderChallengeBest() { const el = $('#challengeBest'); if (el) el.textContent = `最短通关：单 ${formatBestTime(1)} · 双 ${formatBestTime(2)} · 四 ${formatBestTime(4)}`; }
   function elapsed() { return state.elapsedBefore + (state.startedAt ? (Date.now() - state.startedAt) / 1000 : 0); }
   function challengeRemaining() { return Math.max(0, state.challengeLimit - elapsed()); }
   function saveSnapshot() { state.history.push({ columns: clone(state.columns), stock: clone(state.stock), completed: state.completed, moves: state.moves, elapsedBefore: elapsed() }); if (state.history.length > 100) state.history.shift(); }
@@ -720,7 +723,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     if (checkChallengeTimeout() || state.completed < 5) return;
     const finalTime = elapsed(); state.elapsedBefore = finalTime; state.startedAt = 0; persist(); playWinSound();
     if (state.challengeMode) {
-      state.challengeTimes[String(state.mode)] = Math.max(1, Math.ceil(finalTime)); persist();
+      const key = String(state.mode); const completedTime = Math.max(1, Math.ceil(finalTime)); state.challengeTimes[key] = completedTime; state.challengeBestTimes[key] = Number.isFinite(Number(state.challengeBestTimes[key])) && Number(state.challengeBestTimes[key]) > 0 ? Math.min(Number(state.challengeBestTimes[key]), completedTime) : completedTime; renderChallengeBest(); persist();
       toast(`挑战成功，用时 ${fmtTime(finalTime)}，下一局倒计时已更新`);
       setTimeout(() => newGame(state.mode, makeSeed(), true), 900); return;
     }
@@ -805,6 +808,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   document.querySelectorAll('[data-start-mode]').forEach(btn => btn.addEventListener('click', () => { const mode=Number(btn.dataset.startMode); const challenge = pendingChallenge; const minutes = Number($('#challengeMinutes').value); if (challenge && (!Number.isFinite(minutes) || minutes < 1 || minutes > 180)) { toast('请输入 1 到 180 分钟的倒计时'); $('#challengeMinutes').focus(); return; } $('#modeOverlay').classList.remove('open'); newGame(mode, makeSeed(), challenge, challenge ? minutes * 60 : null); pendingChallenge = false; }));
   function showStartScreen() {
     persist();
+    renderChallengeBest();
     $('#overlay').classList.remove('open');
     $('#modeOverlay').classList.remove('open');
     $('#startGameBtn').hidden = false;
