@@ -454,10 +454,10 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       chosenSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
       const candidate = buildDeal(makeDeck(state.mode, chosenSeed));
       attempt++;
-      if (dealHasOpeningMove(candidate.columns) && solveDeal(candidate.columns, candidate.stock, 0)) {
+      if (dealHasOpeningMove(candidate.columns) && solveDeal(candidate.columns, candidate.stock, 0) && assessDealRobustness(candidate.columns, candidate.stock)) {
         state.seed = chosenSeed; state.columns = candidate.columns; state.stock = candidate.stock; state.dealGenerating = false; state.startedAt = Date.now(); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist(); updateSoundButton(); return;
       }
-      if (attempt % 8 === 0) $('#dealLoadingText').textContent = `已验证 ${attempt} 个候选牌局，继续寻找可通关牌局…`;
+      if (attempt % 4 === 0) $('#dealLoadingText').textContent = `已验证 ${attempt} 个候选牌局，正在筛选多分支稳健牌局…`;
       window.setTimeout(searchNext, 0);
     }
     window.setTimeout(searchNext, 0);
@@ -535,8 +535,8 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const cols = columns.map(col => col.map(card => `${card.id}${card.faceUp ? 'u' : 'd'}`).join(',')).sort().join('|');
     return `${completed};${stock.length};${cols}`;
   }
-  function solveDeal(columns, stock, completed = 0) {
-    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:80000, maxMs:500 };
+  function solveDeal(columns, stock, completed = 0, options = {}) {
+    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:options.maxNodes || 80000, maxMs:options.maxMs || 500 };
     function search(currentColumns, currentStock, currentCompleted) {
       if (currentCompleted >= 5) return true;
       if (++context.nodes > context.maxNodes || Date.now() - context.started > context.maxMs) return false;
@@ -559,6 +559,47 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       return false;
     }
     return search(clone(columns), clone(stock), completed);
+  }
+  function simulateStockForSolver(columns, stock, completed) {
+    const nextColumns = clone(columns); const nextStock = stock.slice(); let nextCompleted = completed;
+    for (let i=0; i<nextColumns.length && nextStock.length; i++) {
+      const card = nextStock.pop(); card.faceUp = true; nextColumns[i].push(card);
+      nextCompleted += completeRunsOn(nextColumns, i);
+    }
+    return { columns:nextColumns, stock:nextStock, completed:nextCompleted };
+  }
+  function assessDealRobustness(columns, stock) {
+    const opening = enumerateHintMoves(columns);
+    if (opening.length < 2) return false;
+    const safeOpening = [];
+    for (const move of opening) {
+      const sim = simulateHintMove(columns, 0, move.from, move.index, move.to);
+      if (solveDeal(sim.columns, stock, sim.completed, {maxNodes:30000, maxMs:180})) safeOpening.push(move);
+      if (safeOpening.length >= 2) break;
+    }
+    if (safeOpening.length < 2) return false;
+    const random = rng((columns[0]?.[0]?.id || 0) ^ stock.length ^ 0x51f15e);
+    let survivingBranches = 0;
+    for (let sample=0; sample<4; sample++) {
+      let branchColumns = clone(columns); let branchStock = clone(stock); let branchCompleted = 0;
+      for (let depth=0; depth<4; depth++) {
+        const moves = enumerateHintMoves(branchColumns);
+        if (!moves.length) {
+          if (!branchStock.length) break;
+          const dealt = simulateStockForSolver(branchColumns, branchStock, branchCompleted);
+          branchColumns = dealt.columns; branchStock = dealt.stock; branchCompleted = dealt.completed;
+          continue;
+        }
+        const ranked = moves.map(move => {
+          const sim = simulateHintMove(branchColumns, branchCompleted, move.from, move.index, move.to);
+          return {move, sim, score:hintMoveImpact(branchColumns, sim.columns, move.from, move.index, move.to, sim.completedDelta)};
+        }).sort((a,b) => b.score - a.score);
+        const pick = ranked[Math.min(ranked.length - 1, Math.floor(random() * Math.min(3, ranked.length)))];
+        branchColumns = pick.sim.columns; branchCompleted = pick.sim.completed;
+      }
+      if (solveDeal(branchColumns, branchStock, branchCompleted, {maxNodes:30000, maxMs:180})) survivingBranches++;
+    }
+    return survivingBranches >= 3;
   }
   function hintBoardValue(columns, completed) {
     let hidden = 0, faceUp = 0, empty = 0;
