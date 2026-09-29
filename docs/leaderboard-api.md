@@ -11,12 +11,12 @@
 请求 JSON：
 
 ```json
-{"mode":1,"time":83,"player":"玩家名"}
+{"category":"classic","mode":1,"time":83,"player":"玩家名"}
 ```
 
-`mode` 只能是 `1`、`2`、`4`，`time` 是完成秒数。服务端按 `(player, mode)` 做最短时间 upsert，并返回 `2xx`。
+`category` 为 `classic` 或 `endless`，`mode` 只能是 `1`、`2`、`4`。经典模式使用 `time`（完成秒数），一命到底使用 `streak`（连续通关场数）。服务端按 `(player, category, mode)` 做最优成绩 upsert，并返回 `2xx`。
 
-### `GET /scores?mode=1`
+### `GET /scores?category=classic&mode=1`
 
 返回 JSON：
 
@@ -24,7 +24,13 @@
 {"scores":[{"player":"玩家名","time":83}]}
 ```
 
-服务端按 `time ASC` 排序并限制返回前 50 条。其余花色使用 `mode=2` 和 `mode=4`。
+一命到底请求 `category=endless`，返回 `streak` 字段：
+
+```json
+{"scores":[{"player":"玩家名","streak":12}]}
+```
+
+经典模式按 `time ASC`，一命到底按 `streak DESC` 排序，并限制返回前 50 条。其余花色使用 `mode=2` 和 `mode=4`。
 
 ## 部署方案
 

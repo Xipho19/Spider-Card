@@ -81,16 +81,19 @@
     return body;
   }
 
-  function submitScore(mode, seconds, player) {
+  function submitScore(category, mode, value, player) {
     var API_URL = apiUrl();
     if (!API_URL) return Promise.resolve(false);
-    return request({url:API_URL + "/scores", method:"post", data:{mode:Number(mode), time:Math.max(1, Number(seconds)), player:String(player || "匿名玩家")}, header:{"Content-Type":"application/json"}}).then(parseResult).then(function () { return true; }).catch(function () { return false; });
+    var payload = {category:String(category || "classic"), mode:Number(mode), player:String(player || "匿名玩家")};
+    if (payload.category === "endless") payload.streak = Math.max(0, Math.floor(Number(value) || 0));
+    else payload.time = Math.max(1, Math.ceil(Number(value) || 0));
+    return request({url:API_URL + "/scores", method:"post", data:payload, header:{"Content-Type":"application/json"}}).then(parseResult).then(function () { return true; }).catch(function () { return false; });
   }
 
-  function fetchScores(mode) {
+  function fetchScores(category, mode) {
     var API_URL = apiUrl();
     if (!API_URL) return Promise.resolve(null);
-    return request({url:API_URL + "/scores", method:"get", data:{mode:Number(mode)}, header:{"Content-Type":"application/json"}}).then(parseResult).then(function (body) { return Array.isArray(body.scores) ? body.scores : []; }).catch(function () { return null; });
+    return request({url:API_URL + "/scores", method:"get", data:{category:String(category || "classic"), mode:Number(mode)}, header:{"Content-Type":"application/json"}}).then(parseResult).then(function (body) { return Array.isArray(body.scores) ? body.scores : []; }).catch(function () { return null; });
   }
 
   global.SpiderLeaderboard = {submitScore:submitScore, fetchScores:fetchScores};
