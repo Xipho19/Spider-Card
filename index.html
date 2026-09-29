@@ -269,6 +269,11 @@ html, body { height:100%; overflow:hidden; }
 .mode-modal .mode-choice button { min-height:54px; font-size:16px; }
 .mode-cancel { width:100%; margin-top:12px; }
 .mode-choice[hidden] { display:none !important; }
+.deal-loading { z-index:65; background:rgba(3,14,14,.86); }
+.deal-loading .modal { width:min(330px,calc(100vw - 42px)); padding:28px 22px; }
+.deal-loading .emoji { animation:dealSpinner 1s linear infinite; }
+.deal-loading p { margin:8px 0 0; font-size:13px; }
+@keyframes dealSpinner { to { transform:rotate(360deg); } }
 
 
 /* Initial tableau deal and reveal animation */
@@ -323,13 +328,14 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
 <div id="overlay" class="overlay"><div class="modal"><div class="emoji">✦</div><h2>恭喜完成牌局</h2><p id="winText">你把所有牌组都收进了完成区。</p><div class="modal-actions"><button class="ghost" id="closeModal">查看牌桌</button><button class="primary" id="playAgain">再来一局</button></div></div></div>
 <div id="modeOverlay" class="overlay mode-overlay"><div class="modal mode-modal"><div class="emoji">♠</div><h2 id="modeChoiceTitle">选择花色</h2><p id="modeChoiceSubtitle">选择本局使用的花色数量</p><div id="modeChoice" class="mode-choice" hidden><button data-start-mode="1">单花色</button><button data-start-mode="2">双花色</button><button data-start-mode="4">四花色</button></div><button id="modeCancel" class="ghost mode-cancel">返回</button></div></div>
 <div id="helpOverlay" class="overlay"><div class="modal help-modal"><div class="emoji">♠</div><h2>玩法说明</h2><p class="help-lead">把所有牌按同一花色从 K 到 A 排成完整序列</p><ul class="help-list"><li><b>1</b><div><strong>移动牌组</strong><span>点击一张已翻开的牌选择整组，再点击目标列；也可以直接拖动。</span></div></li><li><b>2</b><div><strong>叠放规则</strong><span>只能把牌放到比它大 1 点的牌下面，例如 5 可以放到 6 下面。</span></div></li><li><b>3</b><div><strong>发新牌</strong><span>点击底部发牌区，每一列获得 1 张新牌。空列也可以继续发牌。</span></div></li><li><b>4</b><div><strong>撤回与提示</strong><span>撤回可以恢复上一步；提示会优先寻找能翻开暗牌或整理同花色牌组的有效移动。</span></div></li><li><b>5</b><div><strong>完成牌组</strong><span>同一花色从 K、Q、J 一直到 A 连成完整 13 张后会自动收进完成区。</span></div></li><li><b>∞</b><div><strong>挑战模式</strong><span>挑战模式同样可以选择单花色、双花色或四花色；完成一局后会自动开始下一局。</span></div></li></ul><button class="primary help-close" id="closeHelp">知道了</button></div></div>
+<div id="dealLoading" class="overlay deal-loading"><div class="modal"><div class="emoji">♠</div><h2>正在生成可通关牌局</h2><p id="dealLoadingText">正在验证牌局路线，请稍候…</p></div></div>
 <div id="toast" class="toast"></div>
 <script>
 (() => {
   const SUITS = ['♠','♥','♦','♣'];
   const SUIT_ASSET = {'♣':'clubs','♦':'diamonds','♥':'hearts','♠':'spades'};
   const RED = new Set(['♥','♦']);
-  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false };
+  const state = { mode: 1, columns: [], stock: [], completed: 0, moves: 0, history: [], selected: null, seed: 0, startedAt: 0, elapsedBefore: 0, timer: null, hint: null, lastHintMove: null, drag: null, suppressClickUntil: 0, soundEnabled: true, dealFlash: false, challengeMode: false, dealGenerating: false, generationToken: 0 };
   const $ = (s) => document.querySelector(s);
   const board = $('#board');
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
@@ -440,17 +446,21 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     }, flyEnd + 40);
   }
   function newGame(mode = state.mode, seed = makeSeed(), challenge = state.challengeMode) {
-    state.mode = mode; state.challengeMode = challenge === true; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.lastHintMove = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.dealFlash = false;
-    let deal = null; let chosenSeed = seed >>> 0;
-    for (let attempt = 0; attempt < 32; attempt++) {
+    state.mode = mode; state.challengeMode = challenge === true; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.lastHintMove = null; state.elapsedBefore = 0; state.startedAt = 0; state.dealFlash = false; state.dealGenerating = true;
+    const token = ++state.generationToken; let attempt = 0; let chosenSeed = seed >>> 0;
+    $('#overlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#startOverlay').classList.remove('open'); $('#dealLoading').classList.add('open');
+    function searchNext() {
+      if (token !== state.generationToken) return;
       chosenSeed = (seed + Math.imul(attempt, 0x9e3779b9)) >>> 0;
       const candidate = buildDeal(makeDeck(state.mode, chosenSeed));
-      if (dealHasOpeningMove(candidate.columns) && solveDeal(candidate.columns, candidate.stock, 0)) { deal = candidate; break; }
-      deal = candidate;
+      attempt++;
+      if (dealHasOpeningMove(candidate.columns) && solveDeal(candidate.columns, candidate.stock, 0)) {
+        state.seed = chosenSeed; state.columns = candidate.columns; state.stock = candidate.stock; state.dealGenerating = false; state.startedAt = Date.now(); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist(); updateSoundButton(); return;
+      }
+      if (attempt % 8 === 0) $('#dealLoadingText').textContent = `已验证 ${attempt} 个候选牌局，继续寻找可通关牌局…`;
+      window.setTimeout(searchNext, 0);
     }
-    state.seed = chosenSeed; state.columns = deal.columns; state.stock = deal.stock;
-    $('#overlay').classList.remove('open');
-    render(); playInitialDealAnimation(); persist(); updateSoundButton();
+    window.setTimeout(searchNext, 0);
   }
   function isMovableRun(col, index) {
     const cards = state.columns[col]; if (!cards[index]?.faceUp) return false;
@@ -526,7 +536,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     return `${completed};${stock.length};${cols}`;
   }
   function solveDeal(columns, stock, completed = 0) {
-    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:18000, maxMs:120 };
+    const context = { seen:new Set(), nodes:0, started:Date.now(), maxNodes:80000, maxMs:500 };
     function search(currentColumns, currentStock, currentCompleted) {
       if (currentCompleted >= 6) return true;
       if (++context.nodes > context.maxNodes || Date.now() - context.started > context.maxMs) return false;
