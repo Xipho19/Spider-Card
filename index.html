@@ -378,6 +378,13 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
 .app > .shell .stats .stat strong { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:clamp(13px, 3.5vw, 16px); }
 .app > .shell .stats .seed-value { font-size:clamp(10px, 2.8vw, 14px)!important; letter-spacing:0!important; }
 .app > .shell { height:calc(100dvh - 92px); }
+/* Some mobile app WebViews report a wide CSS viewport even in portrait mode.
+   Use the touch surface as the mobile signal so the game fills that viewport. */
+@media (pointer: coarse) {
+  html, body { width:100%; min-width:100%; }
+  body { display:block; background:var(--bg); }
+  .app { width:100vw; max-width:none; min-width:100vw; margin:0; box-shadow:none; }
+}
 </style>
 </head>
 <body>
