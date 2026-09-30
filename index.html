@@ -499,6 +499,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     return cardAssetsReady;
   }
   const SAVE_KEY = 'woven-spider-solitaire-v1';
+  const ITEM_SAVE_KEY = 'woven-spider-daily-items-v1';
   const LEADERBOARD_KEY = 'woven-spider-leaderboard-v1';
   let leaderboardMode = 1;
   let leaderboardCategory = 'classic';
@@ -507,6 +508,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     try {
       if (typeof localStorage === 'undefined') return;
       localStorage.setItem(SAVE_KEY, JSON.stringify({ mode: state.mode, columns: state.columns, stock: state.stock, completed: state.completed, moves: state.moves, history: state.history, selected: null, seed: state.seed, elapsedBefore: elapsed(), soundEnabled: state.soundEnabled, challengeMode: state.challengeMode, challengeTimes: state.challengeTimes, challengeBestTimes: state.challengeBestTimes, challengeStreak: state.challengeStreak, challengeBestStreak: state.challengeBestStreak, itemDate: state.itemDate, itemCounts: state.itemCounts }));
+      localStorage.setItem(ITEM_SAVE_KEY, JSON.stringify({ itemDate: state.itemDate, itemCounts: state.itemCounts }));
     } catch (_) {}
   }
   function restoreSavedGame() {
@@ -515,7 +517,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (!saved || !Array.isArray(saved.columns) || saved.columns.length !== 8 || !Array.isArray(saved.stock)) return false;
       state.mode = [1,2,4].includes(saved.mode) ? saved.mode : 1;
-      state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false; state.challengeMode = saved.challengeMode === true; state.challengeTimes = saved.challengeTimes && typeof saved.challengeTimes === 'object' ? saved.challengeTimes : {}; state.challengeBestTimes = saved.challengeBestTimes && typeof saved.challengeBestTimes === 'object' ? saved.challengeBestTimes : {}; state.challengeStreak = Math.max(0, Number(saved.challengeStreak) || 0); state.challengeBestStreak = Math.max(0, Number(saved.challengeBestStreak) || 0); state.itemDate = saved.itemDate || ''; state.itemCounts = saved.itemCounts && typeof saved.itemCounts === 'object' ? {undo:Math.max(0, Number(saved.itemCounts.undo) || 0), hint:Math.max(0, Number(saved.itemCounts.hint) || 0)} : {undo:3, hint:3}; ensureDailyItems(); state.challengeLimit = 0;
+      state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false; state.challengeMode = saved.challengeMode === true; state.challengeTimes = saved.challengeTimes && typeof saved.challengeTimes === 'object' ? saved.challengeTimes : {}; state.challengeBestTimes = saved.challengeBestTimes && typeof saved.challengeBestTimes === 'object' ? saved.challengeBestTimes : {}; state.challengeStreak = Math.max(0, Number(saved.challengeStreak) || 0); state.challengeBestStreak = Math.max(0, Number(saved.challengeBestStreak) || 0); state.itemDate = saved.itemDate || ''; state.itemCounts = saved.itemCounts && typeof saved.itemCounts === 'object' ? {undo:Math.max(0, Number(saved.itemCounts.undo) || 0), hint:Math.max(0, Number(saved.itemCounts.hint) || 0)} : {undo:3, hint:3}; restoreDailyItems(); ensureDailyItems(); state.challengeLimit = 0;
       preloadCardAssets().then(() => { render(); renderChallengeBest(); renderChallengeStreak(); checkWin(); updateSoundButton(); }); return true;
     } catch (_) { return false; }
   }
@@ -557,7 +559,19 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   function fmtTime(sec) { sec = Math.max(0, Math.floor(sec)); return String(Math.floor(sec / 60)).padStart(2,'0') + ':' + String(sec % 60).padStart(2,'0'); }
   function challengeTimeForMode(mode) { return 0; }
   function todayKey() { const now = new Date(); return `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`; }
-  function ensureDailyItems() { const today = todayKey(); if (state.itemDate !== today) { state.itemDate = today; state.itemCounts = {undo:3, hint:3}; persist(); } }
+  function restoreDailyItems() {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      const saved = JSON.parse(localStorage.getItem(ITEM_SAVE_KEY) || 'null');
+      if (!saved || typeof saved !== 'object') return;
+      state.itemDate = typeof saved.itemDate === 'string' ? saved.itemDate : state.itemDate;
+      if (saved.itemCounts && typeof saved.itemCounts === 'object') state.itemCounts = {undo:Math.max(0, Number(saved.itemCounts.undo) || 0), hint:Math.max(0, Number(saved.itemCounts.hint) || 0)};
+    } catch (_) {}
+  }
+  function persistDailyItems() {
+    try { if (typeof localStorage !== 'undefined') localStorage.setItem(ITEM_SAVE_KEY, JSON.stringify({itemDate:state.itemDate, itemCounts:state.itemCounts})); } catch (_) {}
+  }
+  function ensureDailyItems() { const today = todayKey(); if (state.itemDate !== today) { state.itemDate = today; state.itemCounts = {undo:3, hint:3}; persistDailyItems(); persist(); } }
   function updateItemCounts() { ensureDailyItems(); const undo = $('#undoCount'); const hint = $('#hintCount'); if (undo) undo.textContent = `×${state.itemCounts.undo}`; if (hint) hint.textContent = `×${state.itemCounts.hint}`; }
   function showRewardedAd(onReward, onCancel) {
     const provider = window.LampsPlatform?.showRewardedVideo;
@@ -1020,6 +1034,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   state.timer = setInterval(() => { if (!state.startedAt) return; $('#time').textContent = fmtTime(elapsed()); }, 1000);
   setInterval(() => { if ($('#leaderboardOverlay')?.classList.contains('open')) refreshLeaderboard(leaderboardMode); }, 300000);
   preloadCardAssets();
+  restoreDailyItems();
   ensureDailyItems();
   const restored = restoreSavedGame();
   if (restored) { $('#continueGameBtn').hidden = false; $('.start-modal').classList.add('has-saved-game'); }
