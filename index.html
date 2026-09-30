@@ -340,9 +340,20 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   .start-modal { width:100%; max-width:none; min-height:100dvh; height:100dvh; margin:0; border:0; border-radius:0; box-shadow:none; padding-left:max(18px, env(safe-area-inset-left)); padding-right:max(18px, env(safe-area-inset-right)); padding-bottom:max(20px, env(safe-area-inset-bottom)); }
   .top-actions .ghost { display:block; }
   .top-actions #soundBtn { display:block; }
-  .top-actions { gap:2px; }
-  .top-actions .ghost, .top-actions .primary { min-height:38px; padding-left:8px; padding-right:8px; font-size:11px; }
-  .item-btn { min-width:65px; }
+  .topbar { align-items:flex-start; gap:6px; padding:8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left)); }
+  .brand { padding-top:4px; }
+  .top-actions { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-template-rows:repeat(2, minmax(34px, auto)); gap:4px; flex:1 1 auto; width:auto; align-items:stretch; }
+  .top-actions .ghost, .top-actions .primary { min-width:0; min-height:34px; width:100%; padding:5px 4px; font-size:10px; overflow:hidden; text-overflow:ellipsis; }
+  .top-actions #replayBtn { grid-column:1 / span 2; grid-row:2; }
+  .top-actions #newBtn { grid-column:3; grid-row:2; }
+  .item-btn { min-width:0; padding-right:16px!important; }
+  .item-count { top:-5px; right:-3px; min-width:17px; height:17px; font-size:9px; }
+  .stock-area { gap:8px; }
+  .stock { width:48px; height:64px; border-radius:3px; }
+  .stock::before { inset:4px; }
+  .stock span { font-size:17px; }
+  .stock-label { font-size:11px; line-height:1.35; }
+  .shell { height:calc(100dvh - 92px); padding-top:8px; }
 }
 
 
