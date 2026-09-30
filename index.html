@@ -394,6 +394,42 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   transform:scale(.86);
   transform-origin:top center;
 }
+@media (pointer: coarse) {
+  .start-modal {
+    height:100dvh;
+    min-height:100dvh;
+    overflow:hidden;
+    padding:24px 18px max(12px, env(safe-area-inset-bottom));
+  }
+  .home-brand { margin-top:0; }
+  .start-modal .brand-mark { width:46px; height:46px; font-size:27px; margin-bottom:7px; }
+  .start-modal h2 { font-size:29px; }
+  .home-subtitle { margin-top:5px!important; font-size:10px; }
+  .home-tagline { margin-top:6px!important; font-size:11px; }
+  .home-fan,
+  .start-modal.has-saved-game .home-fan {
+    flex:0 0 145px;
+    height:145px;
+    margin:8px auto 0;
+    transform:scale(.72);
+    transform-origin:top center;
+  }
+  .start-modal.has-saved-game .home-fan { flex-basis:125px; height:125px; margin:6px auto -8px; transform:scale(.64); }
+  .home-actions { width:min(350px,100%); gap:6px; margin:0 auto; }
+  .home-mode-btn { min-height:54px; padding:8px 12px; border-radius:14px; }
+  .home-mode-btn strong { font-size:16px; }
+  .home-mode-btn small { margin-top:2px; font-size:10px; }
+  .home-mode-btn .mode-icon { width:32px; height:32px; border-radius:10px; font-size:19px; }
+  .leaderboard-button { min-height:36px; font-size:12px; }
+  .continue-button { margin-top:0; min-height:42px; font-size:15px; padding:8px 16px; }
+  .home-stats { gap:5px; margin-top:8px; }
+  .home-stat { padding:6px 4px; border-radius:10px; }
+  .home-stat strong { font-size:14px; }
+  .home-stat span { margin-top:2px; font-size:9px; }
+  .home-footer { gap:5px; margin-top:8px; font-size:10px; }
+  .home-footer #soundBtn { padding:5px 8px; }
+  .home-footer button { font-size:10px; }
+}
 </style>
 </head>
 <body>
