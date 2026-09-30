@@ -1038,6 +1038,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   ensureDailyItems();
   const restored = restoreSavedGame();
   if (restored) { $('#continueGameBtn').hidden = false; $('.start-modal').classList.add('has-saved-game'); }
+  startBgm();
 })();
 </script>
 </body>
