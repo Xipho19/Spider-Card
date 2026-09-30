@@ -385,6 +385,15 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   body { display:block; background:var(--bg); }
   .app { width:100vw; max-width:none; min-width:100vw; margin:0; box-shadow:none; }
 }
+.start-modal { overflow-x:hidden; overflow-y:auto; }
+.home-fan { flex:0 0 225px; }
+.start-modal.has-saved-game .home-fan {
+  flex-basis:175px;
+  height:175px;
+  margin:12px auto -18px;
+  transform:scale(.86);
+  transform-origin:top center;
+}
 </style>
 </head>
 <body>
@@ -963,7 +972,9 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     $('#startGameBtn').hidden = false;
     $('#challengeGameBtn').hidden = false;
     $('#modeChoice').hidden = true;
-    $('#continueGameBtn').hidden = !state.columns.length;
+    const hasSavedGame = Boolean(state.columns.length);
+    $('#continueGameBtn').hidden = !hasSavedGame;
+    $('.start-modal').classList.toggle('has-saved-game', hasSavedGame);
     $('#startOverlay').classList.add('open');
   }
   $('#newBtn').addEventListener('click', () => { stopChallengeSession(); newGame(state.mode, makeSeed(), state.challengeMode); }); $('#playAgain').addEventListener('click', () => newGame(state.mode, makeSeed(), state.challengeMode)); $('#replayBtn').addEventListener('click', () => { $('#replaySeed').value = state.seed ? String(state.seed) : ''; $('#replayOverlay').classList.add('open'); window.setTimeout(() => $('#replaySeed').focus(), 0); }); $('#replayCancel').addEventListener('click', () => $('#replayOverlay').classList.remove('open')); $('#replayStart').addEventListener('click', () => replayGame($('#replaySeed').value.trim())); $('#replaySeed').addEventListener('keydown', event => { if (event.key === 'Enter') replayGame(event.currentTarget.value.trim()); }); $('#rewardCancel').addEventListener('click', closeRewardPrompt); $('#rewardWatch').addEventListener('click', confirmRewardAd); $('#leaderboardBtn').addEventListener('click', openLeaderboard); $('#leaderboardClose').addEventListener('click', () => $('#leaderboardOverlay').classList.remove('open')); document.querySelectorAll('[data-board-mode]').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('[data-board-mode]').forEach(item => item.classList.toggle('active', item === button)); refreshLeaderboard(Number(button.dataset.boardMode)); })); $('#closeModal').addEventListener('click', () => $('#overlay').classList.remove('open')); $('#homeBtn').addEventListener('click', showStartScreen); $('#undoBtn').addEventListener('click', () => { if (!state.history.length) { toast('还没有可撤回的操作'); return; } useItem('undo', undo); }); $('#hintBtn').addEventListener('click', () => useItem('hint', showHint)); $('#stock').addEventListener('click', dealStock); $('#soundBtn').addEventListener('click', () => { state.soundEnabled = !state.soundEnabled; if (state.soundEnabled) { playTone(520, .07, 'sine', .03); startBgm(); } else stopBgm(); persist(); updateSoundButton(); }); document.addEventListener('pointerdown', () => { ensureAudio(); startBgm(); }, { once: true });
@@ -975,7 +986,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   preloadCardAssets();
   ensureDailyItems();
   const restored = restoreSavedGame();
-  if (restored) $('#continueGameBtn').hidden = false;
+  if (restored) { $('#continueGameBtn').hidden = false; $('.start-modal').classList.add('has-saved-game'); }
 })();
 </script>
 </body>
