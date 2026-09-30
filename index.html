@@ -487,13 +487,18 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     }).catch(() => { toast('广告加载失败，请稍后再试'); if (onCancel) onCancel(); });
   }
   let pendingReward = null;
+  let rewardAdBusy = false;
+  function setRewardAdBusy(busy) { rewardAdBusy = busy; const button = $('#rewardWatch'); if (!button) return; button.disabled = busy; button.textContent = busy ? '加载中…' : '观看广告'; button.setAttribute('aria-busy', String(busy)); }
   function pauseForReward() { if (!state.rewardPaused && state.startedAt) { state.elapsedBefore = elapsed(); state.startedAt = 0; state.rewardPaused = true; render(); persist(); } }
   function resumeAfterReward() { if (state.rewardPaused) { state.startedAt = Date.now(); state.rewardPaused = false; render(); persist(); } }
-  function openRewardPrompt(type, action) { pauseForReward(); pendingReward = {type, action}; $('#rewardOverlay').classList.add('open'); }
-  function closeRewardPrompt() { pendingReward = null; $('#rewardOverlay').classList.remove('open'); resumeAfterReward(); }
+  function openRewardPrompt(type, action) { setRewardAdBusy(false); pauseForReward(); pendingReward = {type, action}; $('#rewardOverlay').classList.add('open'); }
+  function closeRewardPrompt() { setRewardAdBusy(false); pendingReward = null; $('#rewardOverlay').classList.remove('open'); resumeAfterReward(); }
   function confirmRewardAd() {
+    if (rewardAdBusy) return;
     const pending = pendingReward; pendingReward = null; $('#rewardOverlay').classList.remove('open'); if (!pending) { resumeAfterReward(); return; }
-    showRewardedAd(() => { state.itemCounts[pending.type] = 1; persist(); updateItemCounts(); toast('广告完成，已获得 1 次道具'); pending.action(); resumeAfterReward(); }, resumeAfterReward);
+    setRewardAdBusy(true);
+    const finish = () => { setRewardAdBusy(false); resumeAfterReward(); };
+    showRewardedAd(() => { state.itemCounts[pending.type] = 1; persist(); updateItemCounts(); toast('广告完成，已获得 1 次道具'); pending.action(); finish(); }, finish);
   }
   function useItem(type, action) {
     ensureDailyItems();
