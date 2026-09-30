@@ -391,9 +391,12 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
   const rankName = (r) => r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r);
   const cardAsset = (card) => `assets/cards/${SUIT_ASSET[card.suit]}-${rankName(card.rank)}.png`;
   const clone = (v) => JSON.parse(JSON.stringify(v));
-  const preloadedCardAssets = new Set();
+  const preloadedCardAssets = new Map();
+  let cardAssetsReady = null;
   function preloadCardAssets() {
-    if (typeof Image === 'undefined') return;
+    if (cardAssetsReady) return cardAssetsReady;
+    if (typeof Image === 'undefined') return Promise.resolve();
+    const pending = [];
     SUITS.forEach(suit => {
       for (let rank = 1; rank <= 13; rank++) {
         const src = cardAsset({ suit, rank });
@@ -401,10 +404,17 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
         const image = new Image();
         image.decoding = 'sync';
         image.loading = 'eager';
+        const loaded = new Promise(resolve => {
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+        });
         image.src = src;
-        preloadedCardAssets.add(src);
+        preloadedCardAssets.set(src, image);
+        pending.push(loaded);
       }
     });
+    cardAssetsReady = Promise.all(pending);
+    return cardAssetsReady;
   }
   const SAVE_KEY = 'woven-spider-solitaire-v1';
   const LEADERBOARD_KEY = 'woven-spider-leaderboard-v1';
@@ -424,7 +434,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
       if (!saved || !Array.isArray(saved.columns) || saved.columns.length !== 8 || !Array.isArray(saved.stock)) return false;
       state.mode = [1,2,4].includes(saved.mode) ? saved.mode : 1;
       state.columns = saved.columns; state.stock = saved.stock; state.completed = Number(saved.completed) || 0; state.moves = Number(saved.moves) || 0; state.history = Array.isArray(saved.history) ? saved.history : []; state.selected = null; state.hint = null; state.seed = Number(saved.seed) || 0; state.elapsedBefore = Number(saved.elapsedBefore) || 0; state.startedAt = Date.now(); state.soundEnabled = saved.soundEnabled !== false; state.challengeMode = saved.challengeMode === true; state.challengeTimes = saved.challengeTimes && typeof saved.challengeTimes === 'object' ? saved.challengeTimes : {}; state.challengeBestTimes = saved.challengeBestTimes && typeof saved.challengeBestTimes === 'object' ? saved.challengeBestTimes : {}; state.challengeStreak = Math.max(0, Number(saved.challengeStreak) || 0); state.challengeBestStreak = Math.max(0, Number(saved.challengeBestStreak) || 0); state.itemDate = saved.itemDate || ''; state.itemCounts = saved.itemCounts && typeof saved.itemCounts === 'object' ? {undo:Math.max(0, Number(saved.itemCounts.undo) || 0), hint:Math.max(0, Number(saved.itemCounts.hint) || 0)} : {undo:3, hint:3}; ensureDailyItems(); state.challengeLimit = 0;
-      render(); renderChallengeBest(); checkWin(); updateSoundButton(); return true;
+      preloadCardAssets().then(() => { render(); renderChallengeBest(); renderChallengeStreak(); checkWin(); updateSoundButton(); }); return true;
     } catch (_) { return false; }
   }
   function ensureAudio() { if (!state.soundEnabled) return null; try { if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); if (audioContext.state === 'suspended') audioContext.resume(); return audioContext; } catch (_) { return null; } }
@@ -547,7 +557,10 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const token = ++state.generationToken; let attempt = 0; let chosenSeed = seed >>> 0; const generationStarted = Date.now(); let fallback = null; let robustAttempts = 0;
     $('#overlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#startOverlay').classList.remove('open'); $('#dealLoading').classList.add('open');
     function startCandidate(candidate, candidateSeed) {
-      state.seed = candidateSeed; state.columns = candidate.columns; state.stock = candidate.stock; state.dealGenerating = false; state.startedAt = Date.now(); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist(); updateSoundButton();
+      preloadCardAssets().then(() => {
+        if (token !== state.generationToken) return;
+        state.seed = candidateSeed; state.columns = candidate.columns; state.stock = candidate.stock; state.dealGenerating = false; state.startedAt = Date.now(); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist(); updateSoundButton();
+      });
     }
     function searchNext() {
       if (token !== state.generationToken) return;
@@ -572,7 +585,7 @@ body { display:flex; justify-content:center; align-items:stretch; overflow-x:hid
     const candidate = buildDeal(makeDeck(state.mode, replaySeed));
     state.generationToken++;
     state.seed = replaySeed; state.columns = candidate.columns; state.stock = candidate.stock; state.completed = 0; state.moves = 0; state.history = []; state.selected = null; state.hint = null; state.lastHintMove = null; state.elapsedBefore = 0; state.startedAt = Date.now(); state.challengeLimit = state.challengeMode ? challengeTimeForMode(state.mode) : 0;
-    $('#overlay').classList.remove('open'); $('#startOverlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#replayOverlay').classList.remove('open'); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist();
+    preloadCardAssets().then(() => { if (state.seed !== replaySeed) return; $('#overlay').classList.remove('open'); $('#startOverlay').classList.remove('open'); $('#modeOverlay').classList.remove('open'); $('#replayOverlay').classList.remove('open'); $('#dealLoading').classList.remove('open'); render(); playInitialDealAnimation(); persist(); });
   }
   function isMovableRun(col, index) {
     const cards = state.columns[col]; if (!cards[index]?.faceUp) return false;
